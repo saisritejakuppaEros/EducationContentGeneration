@@ -1,0 +1,153 @@
+{
+  "story_title": "The Signal",
+  "course_flow": [
+    "Complex Numbers",
+    "De Moivre's",
+    "Quadratic Expressions",
+    "Theory of Equations"
+  ],
+  "overarching_problem": {
+    "summary": "A deep-space listening post picks up a repeating, garbled transmission. The crew (Mathematician + Friend + You) has to intercept and decode it to find the source.",
+    "chapter_missions": [
+      {
+        "chapter": "Complex Numbers",
+        "mission": "Decode the raw signal (it arrives as pairs of numbers)",
+        "math_topic": "Complex Numbers"
+      },
+      {
+        "chapter": "De Moivre's",
+        "mission": "Correct the ship's course to follow the signal's bearing, which requires repeated rotations",
+        "math_topic": "De Moivre's Theorem"
+      },
+      {
+        "chapter": "Quadratic Expressions",
+        "mission": "Plan safe burn windows so the ship doesn't overshoot or collide while chasing it",
+        "math_topic": "Quadratic Expressions"
+      },
+      {
+        "chapter": "Theory of Equations",
+        "mission": "Crack the signal's final cipher, which turns out to be a polynomial encoding the destination coordinates",
+        "math_topic": "Theory of Equations"
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "number": 1,
+      "name": "Complex Numbers",
+      "subtitle": "Decoding the Signal",
+      "topics": [
+        {
+          "id": "1.1",
+          "topic": "Complex number as an ordered pair",
+          "story_beat": "The signal arrives as raw pairs of numbers with no context",
+          "why_in_story": "Establishes: a complex number isn't mystical, it's just an ordered pair — exactly what the raw data looks like"
+        },
+        {
+          "id": "1.1b",
+          "topic": "Fundamental operations",
+          "story_beat": "Two signal fragments need to be combined to make sense",
+          "why_in_story": "Motivates add/subtract/multiply/divide as the tools to merge fragments"
+        },
+        {
+          "id": "1.2",
+          "topic": "Representation as a + ib",
+          "story_beat": "The ship's onboard computer needs a standard notation to log the decoded pairs",
+          "why_in_story": "Converts the raw pair into a usable working format"
+        },
+        {
+          "id": "1.3",
+          "topic": "Modulus and Amplitude",
+          "story_beat": "Crew needs to know how strong the signal is and in what direction it's coming from",
+          "why_in_story": "Modulus = signal strength, Amplitude/argument = bearing angle — directly usable, not abstract"
+        },
+        {
+          "id": "1.4",
+          "topic": "Geometric/Polar representation, Argand diagram",
+          "story_beat": "Plotting the decoded signal gives the crew a literal star-map bearing to steer toward",
+          "why_in_story": "Pays off the whole chapter — the abstract numbers become a heading on a screen"
+        }
+      ],
+      "chapter_close": "Crew now has a heading. Problem: getting there requires the ship to rotate repeatedly to align with that heading — which the Mathematician says needs a different tool."
+    },
+    {
+      "number": 2,
+      "name": "De Moivre's Theorem",
+      "subtitle": "Course Correction",
+      "topics": [
+        {
+          "id": "2.1",
+          "topic": "De Moivre's Theorem — integral & rational indices",
+          "story_beat": "Ship needs to compute the result of many repeated rotation burns without simulating each one individually",
+          "why_in_story": "Direct payoff: raising a complex number to a power = the shortcut for repeated rotation"
+        },
+        {
+          "id": "2.2",
+          "topic": "nth roots of unity, geometric interpretation",
+          "story_beat": "Crew discovers the signal source isn't one point — it's broadcasting from several evenly-spaced relay stations in a circle",
+          "why_in_story": "Roots of unity are literally equally spaced points on a circle — visual and narrative click perfectly here"
+        }
+      ],
+      "chapter_close": "Ship is now on course toward the relay stations. But fuel is limited — the crew needs to plan exactly when and how hard to burn thrust, or they'll overshoot or run dry."
+    },
+    {
+      "number": 3,
+      "name": "Quadratic Expressions",
+      "subtitle": "The Burn Window",
+      "topics": [
+        {
+          "id": "3.1",
+          "topic": "Quadratic expressions & equations in one variable",
+          "story_beat": "Fuel-burn trajectory naturally comes out as a quadratic — Friend models distance vs time for the burn",
+          "why_in_story": "Grounds the quadratic in a real curve the crew can see on a screen, not an abstract equation"
+        },
+        {
+          "id": "3.2",
+          "topic": "Sign of quadratic expressions, max/min values",
+          "story_beat": "Crew needs to know: does the trajectory ever go negative (i.e. crash course)? What's the most fuel-efficient point?",
+          "why_in_story": "Sign changes = danger zones, max/min = the optimal burn moment — stakes make the concept concrete"
+        },
+        {
+          "id": "3.3",
+          "topic": "Quadratic inequations",
+          "story_beat": "Mission control defines a safe corridor — the trajectory must stay within a range, not hit one exact value",
+          "why_in_story": "Naturally frames inequations as a range the ship must stay inside, not just an equation to solve"
+        }
+      ],
+      "chapter_close": "Ship arrives safely. Now the crew has the full signal and must crack its final cipher — which the Mathematician reveals is a polynomial equation."
+    },
+    {
+      "number": 4,
+      "name": "Theory of Equations",
+      "subtitle": "Cracking the Cipher",
+      "topics": [
+        {
+          "id": "4.1",
+          "topic": "Relation between roots and coefficients",
+          "story_beat": "The cipher is a polynomial — Friend shows you can extract clues about the destination without fully solving it, just from the coefficients",
+          "why_in_story": "Real payoff: roots-and-coefficients tricks feel like an actual codebreaking shortcut"
+        },
+        {
+          "id": "4.2",
+          "topic": "Solving equations when roots are connected by a relation",
+          "story_beat": "The alien cipher includes a hint: two of the coordinates are related (e.g. one is double the other)",
+          "why_in_story": "Directly mirrors how these problems are normally posed — now it's a decryption clue instead of a textbook instruction"
+        },
+        {
+          "id": "4.3",
+          "topic": "Real coefficients — complex roots in conjugate pairs",
+          "story_beat": "Some decoded coordinates come out complex — Friend explains why they always arrive in pairs",
+          "why_in_story": "Ties directly back to Chapter 1's complex numbers — nice narrative full-circle"
+        },
+        {
+          "id": "4.4",
+          "topic": "Transformation of equations, reciprocal equations",
+          "story_beat": "Final step: the cipher needs to be transformed into a related equation to reveal the true coordinates",
+          "why_in_story": "Climax — this is the module that solves the mission"
+        }
+      ],
+      "chapter_close": null
+    }
+  ],
+  "story_resolution": "Crew decodes the final coordinates, arrives at the source, mission complete. Each sub-topic was a tool the crew needed, in the order they needed it."
+}

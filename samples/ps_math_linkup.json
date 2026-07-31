@@ -1,0 +1,133 @@
+{
+  "story_title": "The Signal",
+  "description": "For each sub-topic: the problem the crew hits, the exact equation that solves it, and why that's the right tool. Use this to stage each scene.",
+  "usage_note": "Use each row as a beat: state the problem in-story → have a character reach for the equation → have them say why nothing else would work.",
+  "chapters": [
+    {
+      "number": 1,
+      "name": "Complex Numbers",
+      "subtitle": "Decoding the Signal",
+      "topics": [
+        {
+          "id": "1.1",
+          "topic": "Complex number as an ordered pair",
+          "problem": "The signal arrives as two raw numbers per burst — no unit, no label. The crew doesn't know if it's one quantity or two.",
+          "equation": "$z=(a,b)$ with equality rule $(a,b)=(c,d) \\iff a=c,\\ b=d$",
+          "why_equation": "It's the minimum structure needed to say \"this pair is one object, not two separate numbers\" — without it the crew can't even compare two bursts to see if they match."
+        },
+        {
+          "id": "1.1b",
+          "topic": "Fundamental operations",
+          "problem": "Two overlapping fragments of the same burst need to be merged into one clean reading.",
+          "equation": "$(a,b)+(c,d)=(a+c,\\ b+d)$ and $(a,b)\\cdot(c,d)=(ac-bd,\\ ad+bc)$",
+          "why_equation": "Addition merges two readings of the same kind; multiplication is needed once the crew starts combining a signal with a rotation (later chapter) — so both rules have to be nailed down now, before they're needed."
+        },
+        {
+          "id": "1.2",
+          "topic": "Representation as a + ib",
+          "problem": "The ship's computer can't log raw pairs — it needs a format it can print, compare, and feed into later calculations.",
+          "equation": "$z=a+ib$",
+          "why_equation": "It's the same object as $(a,b)$, just written so ordinary algebra (the kind the computer already runs) applies to it directly — no new machinery, just a translation."
+        },
+        {
+          "id": "1.3",
+          "topic": "Modulus and Amplitude",
+          "problem": "Crew needs two operational numbers out of the decoded signal: how strong is it, and which way is it pointing?",
+          "equation": "$|z|=\\sqrt{a^2+b^2}$ (strength), $\\theta=\\tan^{-1}(b/a)$ (bearing)",
+          "why_equation": "These are literally the only two numbers you can extract from a 2D point that mean \"distance\" and \"direction\" — Pythagoras gives distance, right-triangle trig gives angle. Nothing else in the toolkit produces those two facts."
+        },
+        {
+          "id": "1.4",
+          "topic": "Geometric/Polar representation, Argand diagram",
+          "problem": "The crew has numbers but no heading to feed the ship's navigation system.",
+          "equation": "$z=r(\\cos\\theta+i\\sin\\theta)$, plotted as point $(a,b)$",
+          "why_equation": "Polar form is a heading — magnitude + angle is exactly what a navigation system takes as input. This is the equation that turns math into an actual steering instruction."
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "De Moivre's Theorem",
+      "subtitle": "Course Correction",
+      "topics": [
+        {
+          "id": "2.1",
+          "topic": "De Moivre's Theorem — integral & rational indices",
+          "problem": "Reaching the bearing needs dozens of small rotation burns in sequence. Simulating each one is too slow.",
+          "equation": "$(\\cos\\theta+i\\sin\\theta)^n=\\cos n\\theta+i\\sin n\\theta$",
+          "why_equation": "It replaces \"apply the same rotation $n$ times\" with one multiplication ($n\\theta$). This is the one identity that turns repeated rotation into a single computation — exactly the shortcut the ship's computer needs."
+        },
+        {
+          "id": "2.2",
+          "topic": "nth roots of unity, geometric interpretation",
+          "problem": "The signal isn't from one source — it's coming from several stations, and the crew needs to know how many and where.",
+          "equation": "$z^n=1 \\Rightarrow z=\\cos\\left(\\frac{2k\\pi}{n}\\right)+i\\sin\\left(\\frac{2k\\pi}{n}\\right)$",
+          "why_equation": "Solving $z^n=1$ is the only equation whose solution set is automatically \"$n$ points, evenly spaced on a circle\" — which is exactly the physical layout (a ring of relay stations) the crew is trying to locate."
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Quadratic Expressions",
+      "subtitle": "The Burn Window",
+      "topics": [
+        {
+          "id": "3.1",
+          "topic": "Quadratic expressions & equations in one variable",
+          "problem": "The ship's distance-to-target over time isn't a straight line — it curves, because thrust and drift both act on it. Crew needs to know when the ship reaches the target.",
+          "equation": "$ax^2+bx+c=0,\\quad x=\\dfrac{-b\\pm\\sqrt{b^2-4ac}}{2a}$",
+          "why_equation": "The distance-vs-time model comes out quadratic because acceleration is constant during a burn (same reason projectile motion is quadratic) — the quadratic formula is the direct solver for \"when does this curve hit zero.\""
+        },
+        {
+          "id": "3.2",
+          "topic": "Sign of quadratic expressions, max/min values",
+          "problem": "Crew needs to know if the trajectory ever crosses into \"collision\" territory, and where the most fuel-efficient point of the burn is.",
+          "equation": "Vertex $x=-\\dfrac{b}{2a}$, value $-\\dfrac{D}{4a}$; sign matches $a$ outside the roots",
+          "why_equation": "The vertex formula is the only way to find a turning point without calculus — and the sign rule tells the crew, without checking every single time value, whether the curve ever dips into the danger zone."
+        },
+        {
+          "id": "3.3",
+          "topic": "Quadratic inequations",
+          "problem": "Mission control doesn't want an exact instant — it wants a window of safe times/positions to burn in.",
+          "equation": "$a(x-\\alpha)(x-\\beta)<0 \\iff \\alpha<x<\\beta$ (for $a>0$)",
+          "why_equation": "An equation gives one instant; an inequation gives a range. Once the roots are known (from 3.1), this inequality is the direct translation of \"stay between these two boundaries.\""
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Theory of Equations",
+      "subtitle": "Cracking the Cipher",
+      "topics": [
+        {
+          "id": "4.1",
+          "topic": "Relation between roots and coefficients",
+          "problem": "The cipher is a full polynomial — solving it outright is slow. Crew wants clues about the destination before fully cracking it.",
+          "equation": "$\\sum x_1=-\\dfrac{a_1}{a_0},\\quad \\sum x_1x_2=\\dfrac{a_2}{a_0},\\quad x_1x_2\\cdots x_n=(-1)^n\\dfrac{a_n}{a_0}$",
+          "why_equation": "These relations pull out facts about the roots (sum, product) directly from the coefficients already visible in the transmission — no need to solve the equation to get partial intel."
+        },
+        {
+          "id": "4.2",
+          "topic": "Solving equations when roots are connected by a relation",
+          "problem": "The cipher includes a hint that two coordinates are related (e.g. one is double another) — an extra constraint that should make solving easier, not harder.",
+          "equation": "Substitute the relation (e.g. roots $\\alpha,2\\alpha,\\gamma$) into the sum/product formulas from 4.1 and solve simultaneously",
+          "why_equation": "The relation is exactly one extra equation — combined with the root-coefficient relations, the system now has enough equations to pin down every root, instead of needing to factor blind."
+        },
+        {
+          "id": "4.3",
+          "topic": "Real coefficients — complex roots in conjugate pairs",
+          "problem": "Some decoded coordinates come out complex. Crew wants to know if that means the data is corrupted, or if it's meaningful.",
+          "equation": "If $a_i\\in\\mathbb{R}$ and $z=p+iq$ is a root, then $\\bar z=p-iq$ is also a root",
+          "why_equation": "Because the cipher's coefficients are real, this theorem guarantees complex roots come in pairs — telling the crew this isn't noise, it's proof the source is symmetric (two stations, not one)."
+        },
+        {
+          "id": "4.4",
+          "topic": "Transformation of equations, reciprocal equations",
+          "problem": "The raw cipher's roots aren't the actual coordinates — they need to be shifted/scaled/inverted to reveal the true destination.",
+          "equation": "Replace $x \\to x-h$ (shift), $x \\to x/k$ (scale), or $x \\to 1/x$ (invert) inside $f(x)=0$ to get a new equation",
+          "why_equation": "Instead of re-solving from scratch, substitution builds a new equation whose roots are already the transformed values the crew needs — this is the direct mechanism that turns \"cipher root\" into \"actual coordinate.\""
+        }
+      ]
+    }
+  ]
+}

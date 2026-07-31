@@ -1,0 +1,215 @@
+{
+  "story_title": "The Signal",
+  "tone_target": "Interstellar — practical-feeling analog/digital hybrid tech, teal/amber grade, volumetric light, quiet gravity, camera that holds rather than cuts frantically.",
+  "total_runtime_target": "20:00",
+  "visual_style_bible": {
+    "cast": {
+      "M": {
+        "role": "Mathematician",
+        "description": "50s, close-cropped silver hair, weathered calm face, deep navy flight suit with a worn embroidered insignia, thin wire-frame glasses that catch console light. Moves deliberately, speaks in short declarative lines. Quiet authority, not flashy."
+      },
+      "F": {
+        "role": "Friend",
+        "description": "Late 20s, short dark hair, olive field jacket over a grey thermal, sleeves often pushed up, expressive hands mid-gesture. Leans in when explaining. Makes the complex feel obvious."
+      },
+      "Y": {
+        "role": "You",
+        "description": "Mostly camera POV / over-the-shoulder silhouette. When face is needed: plain flight jacket, breath faintly visible, hands holding a slate/tablet. Audience surrogate."
+      }
+    },
+    "sets": [
+      {
+        "name": "Ops Control Room",
+        "description": "Circular chamber, wraparound curved monitor bank, central holo-table, warm amber practicals against cool blue ambient wash, dust motes in light shafts, deep shadow falloff at frame edges."
+      },
+      {
+        "name": "Cockpit/Ship interior",
+        "description": "Tighter, analog toggle switches under glass, small round viewports, warm interior light shifting to red-alert wash during tense beats."
+      },
+      {
+        "name": "Screen inserts (math)",
+        "description": "Pure black background, glowing cyan-white equations, no clutter — legibility over decoration."
+      }
+    ],
+    "camera_grammar": [
+      {"type": "Y-POV", "description": "Handheld-but-stabilized, subtle breathing sway — this is the audience."},
+      {"type": "OTS Y→M / OTS Y→F", "description": "Classic over-the-shoulder, soft foreground blur of Y's shoulder/collar."},
+      {"type": "Two-shot M+F", "description": "Symmetric framing with Y implied just off-camera between them."},
+      {"type": "Screen insert", "description": "Locked-off, static, no camera motion."},
+      {"type": "Push-in", "description": "Reserved only for revelations/emotional beats, never for teaching beats."},
+      {"type": "Reaction cutaway", "description": "Close on Y or F's face watching a screen, keeps humans present during math-heavy beats."}
+    ],
+    "grade": "Teal shadows, warm amber highlights, light film grain, gentle anamorphic horizontal flare off any screen source.",
+    "golden_rule": "Never let a Manim insert run alone for its full duration. Open on a human gesture toward the screen, hold the insert, close on a reaction."
+  },
+  "scenes": [
+    {
+      "scene_id": "S0",
+      "chapter": "COLD OPEN",
+      "chapter_subtitle": null,
+      "title": null,
+      "render_type": "wan",
+      "topic_ids": [],
+      "time_start": "0:00",
+      "duration_seconds": 60,
+      "cumulative_time": "1:00",
+      "beat": "Alarm triggers. M: \"We're picking up something. It's not noise — it's repeating.\" Signal freezes as number pairs. Title card: THE SIGNAL.",
+      "shots": [
+        {
+          "shot": 1,
+          "time": "0–8s",
+          "duration_seconds": 8,
+          "type": "EXTREME WIDE",
+          "flux_frame": "Massive dish array against a dense starfield, isolated outpost, teal-amber grade, dust and light shafts, wide anamorphic lens",
+          "wan_motion": "Slow push-in, near-imperceptible, stars hold static",
+          "dialogue": null
+        },
+        {
+          "shot": 2,
+          "time": "8–18s",
+          "duration_seconds": 10,
+          "type": "INT WIDE",
+          "flux_frame": "Control room, M and F silhouetted against the monitor bank, one red alarm light beginning to pulse in the background",
+          "wan_motion": "Camera holds, alarm light pulses on a slow interval",
+          "dialogue": null
+        },
+        {
+          "shot": 3,
+          "time": "18–34s",
+          "duration_seconds": 16,
+          "type": "OTS Y→M",
+          "flux_frame": "M turns toward camera (Y), alarm glow reflected faintly in his glasses",
+          "wan_motion": "Subtle handheld sway",
+          "dialogue": "M: \"We're picking up something. It's not noise — it's repeating.\""
+        },
+        {
+          "shot": 4,
+          "time": "34–50s",
+          "duration_seconds": 16,
+          "type": "INSERT",
+          "flux_frame": "Monitor close-up: a waveform mid-oscillation",
+          "wan_motion": "Waveform freezes into scrolling number pairs, rack-focus reveals M/F blurred behind",
+          "dialogue": null
+        },
+        {
+          "shot": 5,
+          "time": "50–60s",
+          "duration_seconds": 10,
+          "type": "TITLE",
+          "flux_frame": "Frozen waveform fills frame, faint cyan glow",
+          "wan_motion": "Slow push, title card THE SIGNAL fades in over the freeze",
+          "dialogue": null
+        }
+      ]
+    },
+    {
+      "scene_id": "S1",
+      "chapter": "Chapter 1 — Complex Numbers",
+      "chapter_subtitle": "Decoding the Signal",
+      "title": "Problem stated",
+      "render_type": "wan",
+      "topic_ids": ["1.1"],
+      "time_start": "1:00",
+      "duration_seconds": 60,
+      "cumulative_time": "2:00",
+      "beat": "M poses the ordered-pair problem. F reassures Y. Sets up 1.1.",
+      "shots": [
+        {
+          "shot": 1,
+          "time": "0–10s",
+          "duration_seconds": 10,
+          "type": "WIDE",
+          "flux_frame": "Control room, three consoles, M center-frame, raw (a,b) pairs scrolling on the main screen behind him",
+          "wan_motion": "Static hold, screen data scrolls",
+          "dialogue": null
+        },
+        {
+          "shot": 2,
+          "time": "10–24s",
+          "duration_seconds": 14,
+          "type": "OTS Y→M",
+          "flux_frame": "M half-turned to camera, gesturing at the scrolling pairs",
+          "wan_motion": "Subtle sway",
+          "dialogue": "M: \"Two numbers per burst. No units, no label. Is it one thing or two?\""
+        },
+        {
+          "shot": 3,
+          "time": "24–34s",
+          "duration_seconds": 10,
+          "type": "INSERT",
+          "flux_frame": "Close on the scrolling (a,b) pairs, cyan glow on M's jaw visible at frame edge",
+          "wan_motion": "Data continues scrolling, slight rack focus onto the numbers",
+          "dialogue": null
+        },
+        {
+          "shot": 4,
+          "time": "34–50s",
+          "duration_seconds": 16,
+          "type": "OTS Y→F",
+          "flux_frame": "F leans into frame from the side console, addressing camera (Y) directly",
+          "wan_motion": "Small confident half-smile",
+          "dialogue": "F: \"It's simpler than it looks.\""
+        },
+        {
+          "shot": 5,
+          "time": "50–60s",
+          "duration_seconds": 10,
+          "type": "TWO-SHOT",
+          "flux_frame": "M and F both facing camera/screen, contemplative hold, Y implied between them",
+          "wan_motion": "Slow push-in, sets up cut to math insert",
+          "dialogue": null
+        }
+      ]
+    },
+    {
+      "scene_id": "S2",
+      "chapter": "Chapter 1 — Complex Numbers",
+      "chapter_subtitle": "Decoding the Signal",
+      "title": "Ordered pair → a+ib",
+      "render_type": "mixed",
+      "topic_ids": ["1.1", "1.2"],
+      "time_start": "2:00",
+      "duration_seconds": 60,
+      "cumulative_time": "3:00",
+      "beat": "Manim delivers ordered pair, a+ib, and one merge operation. Human frame before and after.",
+      "shots": [
+        {
+          "shot": 1,
+          "time": "0–8s",
+          "duration_seconds": 8,
+          "type": "OTS Y→F",
+          "flux_frame": "F points at the main screen, mid-explanation gesture",
+          "wan_motion": "Held beat",
+          "dialogue": "F: \"Think of it as one point, not two numbers.\""
+        },
+        {
+          "shot": 2,
+          "time": "8–40s",
+          "duration_seconds": 32,
+          "type": "MATH INSERT",
+          "flux_frame": "Pure black screen, ordered pair (a,b) plots as a dot on a grid, relabels to z=a+ib, second dot merges: (a,b)+(c,d)=(a+c,b+d)",
+          "wan_motion": "Manim-native motion: point plots, label morphs, merge animation — no camera movement",
+          "dialogue": null
+        },
+        {
+          "shot": 3,
+          "time": "40–50s",
+          "duration_seconds": 10,
+          "type": "REACTION",
+          "flux_frame": "Close on Y's face lit by screen glow, small nod of understanding",
+          "wan_motion": "Y-POV: F glances back to camera, checking in",
+          "dialogue": null
+        },
+        {
+          "shot": 4,
+          "time": "50–60s",
+          "duration_seconds": 10,
+          "type": "OTS Y→M",
+          "flux_frame": "M nods once from the background, arms crossed, approving",
+          "wan_motion": "Minimal motion",
+          "dialogue": "M: \"Good. Now log it.\""
+        }
+      ]
+    }
+  ]
+}
