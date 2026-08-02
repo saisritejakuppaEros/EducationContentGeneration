@@ -1,0 +1,60 @@
+{
+  "story_title": "The Signal",
+  "source": "output/flux_prompts/flux_prompts.json",
+  "model_target": "ltx-2.3",
+  "prompt_framework": "LTX AV — [VISUAL] [SPEECH] [SOUNDS]",
+  "visual_style_bible": {
+    "cast": {},
+    "sets": [],
+    "grade": "Teal shadows, warm amber highlights, light film grain."
+  },
+  "scenes": [
+    {
+      "scene_id": "S0",
+      "shots": [
+        {
+          "shot": 1,
+          "ltx_mode": "cinematic",
+          "use_talking_head_lora": false,
+          "speaker": null,
+          "motion_summary": "Slow tracking toward the dish array, imperceptible star twinkle",
+          "ltx_prompt": "[VISUAL]: An extreme wide anamorphic establishing shot of a massive deep-space radio dish array on an isolated lunar outpost, occupying the lower third against an infinite dense starfield. The camera performs a slow, steady tracking push toward the structure while distant stars twinkle subtly. Practical amber work lights trace the dish scaffolding; cool teal nebula haze bleeds across the background with volumetric light shafts cutting through suspended dust. Teal shadow grade, warm amber highlights, fine film grain, gentle horizontal anamorphic flare from a distant beacon. Interstellar-grade photorealism — quiet, monumental stillness, no figures in frame. [SOUNDS]: Deep space silence with a faint low-frequency engine hum from the outpost, distant metallic creaks from the dish structure settling, subtle wind-like cosmic ambience at very low volume, no speech, no music.",
+          "ltx_prompt_structured": {
+            "visual": "An extreme wide anamorphic establishing shot of a massive deep-space radio dish array on an isolated lunar outpost, occupying the lower third against an infinite dense starfield. The camera performs a slow, steady tracking push toward the structure while distant stars twinkle subtly. Practical amber work lights trace the dish scaffolding; cool teal nebula haze bleeds across the background with volumetric light shafts cutting through suspended dust. Teal shadow grade, warm amber highlights, fine film grain, gentle horizontal anamorphic flare from a distant beacon. Interstellar-grade photorealism — quiet, monumental stillness, no figures in frame.",
+            "speech": null,
+            "sounds": "Deep space silence with a faint low-frequency engine hum from the outpost, distant metallic creaks from the dish structure settling, subtle wind-like cosmic ambience at very low volume, no speech, no music."
+          },
+          "negative_prompt": "music, silent or muted audio, distorted voice, off-sync lips, background music, washed out contrast, deformed facial features, out of focus face, unnatural skin tones"
+        },
+        {
+          "shot": 2,
+          "ltx_mode": "talking_head",
+          "use_talking_head_lora": true,
+          "speaker": "M",
+          "motion_summary": "Handheld sway, M turns toward camera while speaking",
+          "ltx_prompt": "[VISUAL]: A medium close-up of a man in his 50s with close-cropped silver hair, weathered calm face, deep navy flight suit with worn insignia, and thin wire-frame glasses catching console glow. He stands on a ship bridge bathed in pulsing red-alert wash against teal shadows. He turns slightly toward camera and speaks with deliberate calm while monitors flicker chaotic wave patterns behind him. Subtle handheld camera sway. ARRI Alexa 65, 50mm anamorphic, T2.8, shallow depth of field isolating his face. [SPEECH]: We're picking up something. It's not noise — it's repeating. [SOUNDS]: The speaker has a calm, measured male voice at moderate volume, close to the microphone, quiet authority with a slight gravel texture. Background: pulsing red-alert klaxon at low volume, faint console beeps, warm amber practical lights humming, distant ship hull resonance.",
+          "ltx_prompt_structured": {
+            "visual": "A medium close-up of a man in his 50s with close-cropped silver hair, weathered calm face, deep navy flight suit with worn insignia, and thin wire-frame glasses catching console glow. He stands on a ship bridge bathed in pulsing red-alert wash against teal shadows. He turns slightly toward camera and speaks with deliberate calm while monitors flicker chaotic wave patterns behind him. Subtle handheld camera sway. ARRI Alexa 65, 50mm anamorphic, T2.8, shallow depth of field isolating his face.",
+            "speech": "We're picking up something. It's not noise — it's repeating.",
+            "sounds": "The speaker has a calm, measured male voice at moderate volume, close to the microphone, quiet authority with a slight gravel texture. Background: pulsing red-alert klaxon at low volume, faint console beeps, warm amber practical lights humming, distant ship hull resonance."
+          },
+          "negative_prompt": "music, silent or muted audio, distorted voice, off-sync lips, background music, washed out contrast, deformed facial features, out of focus face, unnatural skin tones"
+        },
+        {
+          "shot": 3,
+          "ltx_mode": "skip",
+          "use_talking_head_lora": false,
+          "speaker": null,
+          "motion_summary": null,
+          "ltx_prompt": null,
+          "ltx_prompt_structured": {
+            "visual": null,
+            "speech": null,
+            "sounds": null
+          },
+          "negative_prompt": null
+        }
+      ]
+    }
+  ]
+}

@@ -64,15 +64,7 @@ def parse_json_output(raw: str, validate) -> dict:
     return data
 
 
-def run_gemma_json_generation(
-    *,
-    system_prompt: str,
-    user_prompt: str,
-    model_path: Path,
-    max_new_tokens: int,
-    enable_thinking: bool,
-    validate,
-) -> dict:
+def load_gemma_model(model_path: Path):
     from transformers import AutoModelForMultimodalLM, AutoProcessor
 
     processor = AutoProcessor.from_pretrained(str(model_path))
@@ -81,7 +73,19 @@ def run_gemma_json_generation(
         dtype="auto",
         device_map="auto",
     )
+    return processor, model
 
+
+def run_gemma_json_with_model(
+    *,
+    processor,
+    model,
+    system_prompt: str,
+    user_prompt: str,
+    max_new_tokens: int,
+    enable_thinking: bool,
+    validate,
+) -> dict:
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
@@ -108,3 +112,24 @@ def run_gemma_json_generation(
     response = processor.decode(outputs[0][input_len:], skip_special_tokens=False)
     raw_text = parse_response_text(processor, response, inputs["input_ids"])
     return parse_json_output(raw_text, validate)
+
+
+def run_gemma_json_generation(
+    *,
+    system_prompt: str,
+    user_prompt: str,
+    model_path: Path,
+    max_new_tokens: int,
+    enable_thinking: bool,
+    validate,
+) -> dict:
+    processor, model = load_gemma_model(model_path)
+    return run_gemma_json_with_model(
+        processor=processor,
+        model=model,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        max_new_tokens=max_new_tokens,
+        enable_thinking=enable_thinking,
+        validate=validate,
+    )

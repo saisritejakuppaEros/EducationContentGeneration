@@ -18,3 +18,4 @@
 Keep documentation concise—just enough to help someone quickly understand the module. Avoid detailed technical explanations unless explicitly requested.
 
 make sure you keep all the outputs in the output/sub_module_name folder all the time
+

@@ -1,0 +1,56 @@
+{
+  "story_title": "The Signal",
+  "source": "image_video_generation.json",
+  "model_target": "flux-2",
+  "prompt_framework": "SASC — Subject, Action, Style, Context",
+  "visual_style_bible": {
+    "cast": {},
+    "sets": [],
+    "camera_grammar": [],
+    "grade": "Teal shadows, warm amber highlights, light film grain, gentle anamorphic horizontal flare off any screen source.",
+    "golden_rule": "Never let a Manim insert run alone for its full duration."
+  },
+  "scenes": [
+    {
+      "scene_id": "S0",
+      "shots": [
+        {
+          "shot": 1,
+          "type": "EXTREME WIDE",
+          "flux_frame": "Massive dish array against a dense starfield, isolated outpost, teal-amber grade",
+          "flux_prompt": "An extreme wide anamorphic establishing shot of a massive deep-space radio dish array on an isolated lunar outpost, the primary subject occupying the lower third of frame against an infinite dense starfield. Practical amber work lights trace the dish scaffolding while cool teal nebula haze bleeds across the background, volumetric light shafts cutting through suspended dust. Shot on ARRI Alexa 65 with Panavision C-series anamorphic lenses at T2.8, 24mm, slow imperceptible dolly push. Interstellar-grade photorealism: teal shadow grade, warm amber highlights, fine film grain, gentle horizontal lens flare from a distant console beacon. Quiet, monumental stillness — no figures in frame, deep shadow falloff at frame edges, cinematic sci-fi documentary tone.",
+          "flux_prompt_structured": {
+            "subject": "Massive deep-space radio dish array on isolated outpost",
+            "action": "Static monumental hold with imperceptible dolly push",
+            "environment": "Dense starfield, lunar surface, suspended dust in light shafts",
+            "lighting": "Amber practical work lights on structure, cool teal ambient nebula wash, volumetric shafts",
+            "camera": "Extreme wide, lower-third composition, anamorphic 2.39:1",
+            "lens": "ARRI Alexa 65, Panavision C-series anamorphic 24mm, T2.8",
+            "composition": "Subject lower third, infinite depth, deep edge falloff",
+            "color_grade": "Teal shadows, amber highlights, film grain, horizontal anamorphic flare",
+            "mood": "Quiet gravity, Interstellar isolation, awe",
+            "style_reference": "Interstellar, Denis Villeneuve wide establishing shots"
+          }
+        },
+        {
+          "shot": 2,
+          "type": "MATH INSERT",
+          "flux_frame": "Black background, ordered pair (a,b) plots as a dot on a grid, relabels to z=a+ib",
+          "flux_prompt": "A clean educational math visualization frame on pure black #000000 background: a single cyan-white glowing point plotted at coordinates (a,b) on a minimal Cartesian grid with thin grey axis lines. The label z = a + ib appears in crisp sans-serif white typography beside the point, soft cyan bloom on the dot, no decorative elements, no characters, no environment. Locked-off flat orthographic view, 16:9, high contrast, legibility-first graphic design. Style reference: 3Blue1Brown / Manim aesthetic — precise, luminous, scientific clarity. Subtle film grain at 5% opacity only to avoid flat digital look.",
+          "flux_prompt_structured": {
+            "subject": "Complex plane point (a,b) with label z = a + ib",
+            "action": "Static frame capturing mid-morph state of label",
+            "environment": "Pure black void, minimal grid",
+            "lighting": "Self-illuminated cyan-white point glow, no external lights",
+            "camera": "Locked orthographic top-down, flat 2D graphic",
+            "lens": "N/A — motion graphics frame",
+            "composition": "Point offset from center, label right-aligned, generous negative space",
+            "color_grade": "Black background, cyan-white accent #00E5FF, white typography",
+            "mood": "Clinical clarity, educational precision",
+            "style_reference": "Manim, 3Blue1Brown, sci-fi HUD math insert"
+          }
+        }
+      ]
+    }
+  ]
+}
