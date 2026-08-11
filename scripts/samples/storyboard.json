@@ -1,0 +1,39 @@
+{
+  "chapter": "Complex Numbers",
+  "tone_target": "Interstellar-adjacent grounded sci-fi",
+  "total_runtime_target": "18:00",
+  "visual_style_bible": {
+    "cast": {},
+    "sets": [],
+    "camera_grammar": {},
+    "grade": "teal shadows, warm amber highlights",
+    "golden_rule": "One speaking character per shot"
+  },
+  "scenes": [
+    {
+      "scene_id": "SC01",
+      "screenplay_type": "STORY",
+      "topic_ids": [],
+      "title": "The Repeating Signal",
+      "duration_seconds": 45,
+      "shots": [
+        {
+          "shot": 1,
+          "type": "WIDE",
+          "lens_mm": 24,
+          "subject_scale_pct": 25,
+          "camera_move": "static",
+          "duration_seconds": 8,
+          "characters_in_frame": ["M", "F", "Y"],
+          "reference_tags_used": {"M": "wide_full_body_neutral_pose", "F": "three_quarter_left", "Y": "three_quarter_right"},
+          "environment_detail": ["secondary console with cracked display", "dish-array status board"],
+          "blocking": "M at console center-left; F and Y enter frame right",
+          "dialogue": null,
+          "flux_prompt": "Wide establishing shot, 24mm lens, control room from image one...",
+          "keyframe_image": "output/storyboard/SC01/SC01_shot01.png",
+          "qc_status": "pending"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "textbook_title": "Intermediate Mathematics",
+  "target_tone": "Interstellar-adjacent grounded sci-fi — teal shadows, warm amber highlights, quiet gravity",
+  "cast": {
+    "M": {
+      "role": "Mathematician",
+      "description": "Historical mathematician figure, late 20s appearance, formal but warm, dark hair",
+      "voice_profile": {
+        "pace": "measured",
+        "register": "formal",
+        "accent": "neutral Indian English",
+        "tic": "pauses before equations"
+      },
+      "reference_photos": [
+        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/M/front_neutral.png", "source": "pending"}
+      ]
+    },
+    "F": {
+      "role": "Friend",
+      "description": "Young engineer, confident, practical clothes, short hair",
+      "voice_profile": {
+        "pace": " brisk",
+        "register": "casual",
+        "accent": "neutral Indian English",
+        "tic": "uses analogies"
+      },
+      "reference_photos": [
+        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/F/front_neutral.png", "source": "pending"}
+      ]
+    },
+    "Y": {
+      "role": "You",
+      "description": "Viewer surrogate, curious, same age as F, casual ship uniform",
+      "voice_profile": {
+        "pace": "normal",
+        "register": "informal",
+        "accent": "neutral Indian English",
+        "tic": "asks short questions"
+      },
+      "reference_photos": [
+        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/Y/front_neutral.png", "source": "pending"}
+      ]
+    }
+  },
+  "world": {
+    "premise": "A deep-space relay crew decodes a repeating signal using mathematics — each chapter is one decoding mission.",
+    "sets": [
+      {
+        "name": "Control Room",
+        "description": "Secondary console with cracked display, dish-array status board on back wall, teal shadows",
+        "reference_image": null
+      }
+    ]
+  },
+  "visual_grammar": {
+    "grade": "teal shadows, warm amber highlights, anamorphic flare off screens",
+    "camera_rules": ["hold shots rather than frantic cuts", "24mm for wides, 85mm for close/OTS"],
+    "screen_direction_rules": "M screen-left when facing console; F enters frame right; Y between them in two-shots"
+  },
+  "chapters_so_far": []
+}

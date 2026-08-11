@@ -1,3 +1,8 @@
 gemma4_model
 output
 .venv
+saisriteja.github.io
+zipfiles
+output_v1
+__pycache__/
+*.pyc

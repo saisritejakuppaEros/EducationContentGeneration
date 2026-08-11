@@ -1,0 +1,37 @@
+{
+  "chapter": "Complex Numbers",
+  "scenes": [
+    {
+      "scene_id": "SC01",
+      "type": "STORY",
+      "int_ext": "INT",
+      "location": "Deep Space Relay — Control Room",
+      "time_of_day": "NIGHT",
+      "topic_ids": [],
+      "action": "Alarms dim to a pulse. M studies a waveform that repeats with impossible regularity. F and Y enter.",
+      "dialogue": [
+        {"character": "M", "line": "We're picking up something. It's not noise — it's repeating."},
+        {"character": "Y", "line": "Can we decode it?"},
+        {"character": "F", "line": "Not until we know what kind of number it's hiding."}
+      ],
+      "target_duration_seconds": 45,
+      "leads_to": "SC02"
+    },
+    {
+      "scene_id": "SC02",
+      "type": "HYBRID",
+      "int_ext": "INT",
+      "location": "Control Room — Navigation Console",
+      "time_of_day": "NIGHT",
+      "topic_ids": ["1.1"],
+      "action": "F pulls up twin counters on the console. Y watches the numbers shift in lockstep.",
+      "dialogue": [
+        {"character": "F", "line": "Every burst gives us two readings — but they're one signal, not two."},
+        {"character": "Y", "line": "So we pair them?"},
+        {"character": "F", "line": "Exactly. One object. Two coordinates."}
+      ],
+      "target_duration_seconds": 55,
+      "leads_to": "SC03"
+    }
+  ]
+}

@@ -9,14 +9,13 @@ from diffusers import Flux2Pipeline
 from diffusers.utils import load_image
 from PIL import Image
 
-from paths import PROJECT_ROOT, output_dir
+from paths import DEFAULT_PERSON_DIR, PROJECT_ROOT, output_dir
 
 SUB_MODULE = "flux_images"
 DEFAULT_PROMPTS = PROJECT_ROOT / "output" / "flux_prompts" / "flux_prompts.json"
-DEFAULT_PERSON_DIR = PROJECT_ROOT / "person"
 DEFAULT_MODEL_HUB = Path("/workspace/parth/models/hub/models--black-forest-labs--FLUX.2-dev")
 
-# Cast key -> filename inside person/
+# Cast key -> filename inside assets/images/
 DEFAULT_CAST_PHOTOS = {
     "F": "friend.png",
     "M": "ramanujan.jpeg",

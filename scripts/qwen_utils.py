@@ -1,13 +1,11 @@
 import os
 import re
 
-import litellm
-
 from gemma_utils import parse_json_output
 
 DEFAULT_API_BASE = "http://localhost:8000/v1"
 DEFAULT_API_KEY = "sk-local"
-DEFAULT_MODEL = "openai/Qwen/Qwen3.5-27B"
+DEFAULT_MODEL = "Qwen/Qwen3.5-27B"
 
 _THINK_OPEN = "\x3cthink\x3e"
 _THINK_CLOSE = "\x3c/think\x3e"
@@ -26,6 +24,13 @@ def strip_thinking(text: str) -> str:
     return cleaned.strip()
 
 
+def normalize_model_id(model: str) -> str:
+    """Strip LiteLLM provider prefix (openai/...) for direct vLLM OpenAI API calls."""
+    if model.startswith("openai/"):
+        return model.removeprefix("openai/")
+    return model
+
+
 def run_qwen_json(
     *,
     system_prompt: str,
@@ -37,11 +42,14 @@ def run_qwen_json(
     temperature: float = 0.6,
     validate,
 ) -> dict:
+    from openai import OpenAI
+
     resolved_base = api_base or os.environ.get("OPENAI_API_BASE", DEFAULT_API_BASE)
     resolved_key = api_key or os.environ.get("OPENAI_API_KEY", DEFAULT_API_KEY)
-    resolved_model = model or os.environ.get("QWEN_MODEL", DEFAULT_MODEL)
+    resolved_model = normalize_model_id(model or os.environ.get("QWEN_MODEL", DEFAULT_MODEL))
 
-    response = litellm.completion(
+    client = OpenAI(base_url=resolved_base, api_key=resolved_key)
+    response = client.chat.completions.create(
         model=resolved_model,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -49,8 +57,6 @@ def run_qwen_json(
         ],
         max_tokens=max_tokens,
         temperature=temperature,
-        api_base=resolved_base,
-        api_key=resolved_key,
         extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     )
 

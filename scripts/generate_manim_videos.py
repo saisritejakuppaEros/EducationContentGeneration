@@ -14,10 +14,10 @@ from manim_generator.utils.parsing import SceneParsingError, extract_scene_class
 from manim_generator.utils.usage import format_duration, get_usage_totals
 from manim_generator.utils.video import render_and_concat
 from manim_generator.workflow import ManimWorkflow
-from paths import PROJECT_ROOT, output_dir
+from paths import DEFAULT_QWEN_MODEL, PROJECT_ROOT, output_dir
 
 SUB_MODULE = "manim_videos"
-MANIM_GENERATOR_ROOT = PROJECT_ROOT / "manim-generator"
+MANIM_GENERATOR_ROOT = PROJECT_ROOT / "scripts" / "manim-generator"
 
 
 @contextmanager
@@ -29,19 +29,22 @@ def manim_generator_cwd():
         yield
     finally:
         os.chdir(previous)
-DEFAULT_STORYBOARD = (
-    PROJECT_ROOT / "output" / "image_video_generation" / "image_video_generation.json"
-)
+DEFAULT_STORYBOARD = output_dir("storyboard") / "storyboard.json"
+DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
 DEFAULT_MATH_LINKUP = PROJECT_ROOT / "output" / "ps_math_linkup" / "ps_math_linkup.json"
 
-DEFAULT_MANIM_MODEL = "openrouter/x-ai/grok-code-fast-1"
-DEFAULT_REVIEW_MODEL = "openrouter/x-ai/grok-code-fast-1"
+DEFAULT_MANIM_MODEL = DEFAULT_QWEN_MODEL
+DEFAULT_REVIEW_MODEL = DEFAULT_QWEN_MODEL
 DEFAULT_REVIEW_CYCLES = 4
 
 
 def load_math_topics(linkup_path: Path) -> dict[str, dict]:
     data = json.loads(linkup_path.read_text(encoding="utf-8"))
     topics: dict[str, dict] = {}
+    if "topics" in data:
+        for topic in data.get("topics", []):
+            topics[topic["id"]] = {**topic, "chapter_name": data.get("chapter", "")}
+        return topics
     for chapter in data.get("chapters", []):
         for topic in chapter.get("topics", []):
             topics[topic["id"]] = {
@@ -63,8 +66,12 @@ def math_insert_set_description(visual_style_bible: dict) -> str:
 def iter_math_insert_shots(storyboard: dict) -> list[tuple[dict, dict]]:
     shots: list[tuple[dict, dict]] = []
     for scene in storyboard.get("scenes", []):
+        scene_type = (scene.get("screenplay_type") or scene.get("render_type") or "").upper()
         for shot in scene.get("shots", []):
-            if (shot.get("type") or "").upper() == "MATH INSERT":
+            shot_type = (shot.get("type") or "").upper()
+            if shot_type == "MATH INSERT" or scene_type in {"CONCEPT", "HYBRID"} and shot_type == "MATH INSERT":
+                shots.append((scene, shot))
+            elif scene_type == "CONCEPT" and shot_type in {"INSERT", "MATH INSERT", "CONCEPT"}:
                 shots.append((scene, shot))
     return shots
 
@@ -84,9 +91,11 @@ def build_video_data_prompt(
             continue
         topic_lines.append(
             f"- [{topic_id}] {topic['topic']}\n"
-            f"  Problem: {topic['problem']}\n"
+            f"  Problem: {topic.get('real_world_problem') or topic.get('problem', '')}\n"
             f"  Equation: {topic['equation']}\n"
-            f"  Why: {topic['why_equation']}"
+            f"  Why: {topic.get('why_this_tool') or topic.get('why_equation', '')}\n"
+            f"  Core visual (ONLY this): {topic.get('core_visual_idea', 'Show the main idea clearly')}\n"
+            f"  Excluded: {', '.join(topic.get('explicitly_excluded') or [])}"
         )
 
     chapter = scene.get("chapter", "")
@@ -115,6 +124,7 @@ Mathematical context:
 {chr(10).join(topic_lines) if topic_lines else '- Use the animation description above as the primary math content.'}
 
 Requirements:
+- Visualize ONLY the core_visual_idea — no proofs, no edge cases, no multi-step derivations
 - Create a single polished Manim animation suitable as a screen insert in a sci-fi film
 - Reveal formulas and geometric constructions step by step
 - Keep the background pure black with cyan/white glowing math typography
@@ -466,10 +476,16 @@ def main() -> None:
         help=f"Storyboard JSON with MATH INSERT shots (default: {DEFAULT_STORYBOARD.relative_to(PROJECT_ROOT)})",
     )
     parser.add_argument(
+        "--math-bible",
+        type=Path,
+        default=DEFAULT_MATH_BIBLE,
+        help=f"Math bible JSON (default: {DEFAULT_MATH_BIBLE.relative_to(PROJECT_ROOT)})",
+    )
+    parser.add_argument(
         "--math-linkup",
         type=Path,
-        default=DEFAULT_MATH_LINKUP,
-        help=f"Math topic linkup JSON (default: {DEFAULT_MATH_LINKUP.relative_to(PROJECT_ROOT)})",
+        default=None,
+        help="Legacy math linkup JSON (overrides --math-bible when set).",
     )
     parser.add_argument(
         "--scene",
@@ -517,16 +533,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    math_path = args.math_linkup or args.math_bible
     if not args.storyboard.is_file():
         raise FileNotFoundError(f"Storyboard file not found: {args.storyboard}")
-    if not args.math_linkup.is_file():
-        raise FileNotFoundError(f"Math linkup file not found: {args.math_linkup}")
+    if not math_path.is_file():
+        raise FileNotFoundError(f"Math input not found: {math_path}")
 
     scene_timeout = None if args.scene_timeout == 0 else args.scene_timeout
 
     manifest = generate(
         storyboard_path=args.storyboard,
-        math_linkup_path=args.math_linkup,
+        math_linkup_path=math_path,
         scene_ids=args.scene_ids,
         shot_numbers=args.shot_numbers,
         manim_model=args.manim_model,
@@ -546,8 +563,4 @@ def main() -> None:
         return
 
     ok = sum(1 for s in manifest.get("shots", []) if s.get("success"))
-    print(f"\nDone. {ok}/{len(manifest.get('shots', []))} shots tracked in output/{SUB_MODULE}/manifest.json")
-
-
-if __name__ == "__main__":
-    main()
+    print(f"\nDone. {ok

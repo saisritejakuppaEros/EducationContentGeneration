@@ -229,6 +229,7 @@ def build_manifest_entry(
 def generate(
     *,
     prompts_path: Path,
+    sub_module: str = SUB_MODULE,
     model_id: str,
     talking_head_lora: str,
     talking_head_weight: str,
@@ -257,7 +258,7 @@ def generate(
     configure_model_cache(hf_home)
     data = json.loads(prompts_path.read_text(encoding="utf-8"))
 
-    out_dir = output_dir(SUB_MODULE)
+    out_dir = output_dir(sub_module)
     manifest_path = out_dir / "manifest.json"
     manifest = {
         "story_title": data.get("story_title"),
@@ -465,6 +466,11 @@ def main() -> None:
         action="store_true",
         help="Use sequential CPU offload (slowest, least VRAM). Default is model offload.",
     )
+    parser.add_argument(
+        "--output-sub-module",
+        default=SUB_MODULE,
+        help=f"Output directory name under output/ (default: {SUB_MODULE}).",
+    )
     parser.add_argument("--skip-existing", action="store_true")
     args = parser.parse_args()
 
@@ -476,6 +482,7 @@ def main() -> None:
 
     manifest = generate(
         prompts_path=args.prompts,
+        sub_module=args.output_sub_module,
         model_id=args.model,
         talking_head_lora=args.talking_head_lora,
         talking_head_weight=args.talking_head_weight,
@@ -504,7 +511,7 @@ def main() -> None:
 
     print(
         f"Done. {len(manifest.get('shots', []))} shots tracked in "
-        f"output/{SUB_MODULE}/manifest.json"
+        f"output/{args.output_sub_module}/manifest.json"
     )
 
 

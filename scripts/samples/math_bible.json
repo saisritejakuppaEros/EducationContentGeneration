@@ -1,0 +1,25 @@
+{
+  "chapter": "Complex Numbers",
+  "topics": [
+    {
+      "id": "1.1",
+      "topic": "Complex number as an ordered pair",
+      "real_world_problem": "The signal arrives as two raw numbers per burst with no label — the crew cannot tell if it is one quantity or two independent readings.",
+      "equation": "$z=(a,b)$ with $(a,b)=(c,d) \\iff a=c,\\ b=d$",
+      "why_this_tool": "Ordered pairs are the minimum structure to treat two readings as one object you can compare and manipulate.",
+      "prerequisites": [],
+      "core_visual_idea": "Two numbers on separate axes slide together to become one point — one object, not two numbers.",
+      "explicitly_excluded": ["field axioms", "polar form", "modulus derivation"]
+    },
+    {
+      "id": "1.2",
+      "topic": "Representation as a + ib",
+      "real_world_problem": "The ship computer cannot log raw pairs — it needs a format compatible with existing algebra routines.",
+      "equation": "$z=a+ib$",
+      "why_this_tool": "Same object as $(a,b)$ written so ordinary symbolic algebra applies directly.",
+      "prerequisites": ["1.1"],
+      "core_visual_idea": "The point $(a,b)$ relabels as $a+ib$ on the same plane — translation, not a new object.",
+      "explicitly_excluded": ["multiplication derivation", "complex conjugate proofs"]
+    }
+  ]
+}
