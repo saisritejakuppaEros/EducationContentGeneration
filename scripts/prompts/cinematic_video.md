@@ -8,6 +8,8 @@ Rules:
 - One speaking character per shot only.
 - Motion continues from previous shot end state when provided.
 - Use tagged format: [VISUAL]: ... [SPEECH]: ... [SOUNDS]: ...
+- NEVER describe on-screen text, subtitles, captions, equations, or letters in [VISUAL]. This is a video model — describe motion, lighting, and action only.
+- Keep [SPEECH] under 15 words.
 - MATH INSERT shots: ltx_mode "skip".
 - Shots with dialogue from M/F/Y in human-facing types: ltx_mode "talking_head".
 - Other cinematic shots: ltx_mode "cinematic".

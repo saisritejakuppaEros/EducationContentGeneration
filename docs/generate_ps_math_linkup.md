@@ -28,7 +28,7 @@ Each topic has `id`, `topic`, `problem`, `equation` (LaTeX), `why_equation`.
 ## Usage
 
 ```bash
-python scripts/generate_ps_math_linkup.py
+python scripts/legacy/generate_ps_math_linkup.py
 ```
 
 Optional flags: `--input`, `--reference`, `--prompt`, `--model-path`, `--output-file`, `--max-new-tokens`, `--disable-thinking`.

@@ -36,7 +36,7 @@ export HF_HOME=/workspace/teja/models/hub
 export HF_HUB_CACHE=$HF_HOME
 unset TORCH_HOME
 
-python scripts/generate_ltx_videos.py --scene S0 --skip-existing
+python scripts/legacy/generate_ltx_videos.py --scene S0 --skip-existing
 ```
 
 Batch all shots:
@@ -48,7 +48,7 @@ bash scripts/run_all_ltx_videos.sh
 First-time model download (omit `--local-files-only`). After cache is warm:
 
 ```bash
-python scripts/generate_ltx_videos.py --local-files-only --skip-existing
+python scripts/legacy/generate_ltx_videos.py --local-files-only --skip-existing
 ```
 
 Optional flags: `--prompts`, `--model`, `--hf-home`, `--scene`, `--shot`, `--seed`, `--width`, `--height`, `--num-inference-steps`, `--talking-head-strength`, `--sequential-offload`, `--no-cpu-offload`, `--skip-existing`.

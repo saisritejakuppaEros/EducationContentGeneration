@@ -20,8 +20,8 @@ Stage 3b — expands single source photos into tagged reference sets for storybo
 ## Usage
 
 ```bash
-python scripts/build_reference_bank.py --copy-only
-python scripts/build_reference_bank.py --skip-existing
+python scripts/stages/build_reference_bank.py --copy-only
+python scripts/stages/build_reference_bank.py --skip-existing
 ```
 
 Use `--copy-only` to bootstrap without GPU. Remove it for Flux-generated angle variants.

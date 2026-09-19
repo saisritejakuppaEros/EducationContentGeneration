@@ -33,13 +33,13 @@ Math-only shots (no characters) use the text prompt only.
 source /devwork/MiniConda/miniconda3/etc/profile.d/conda.sh
 conda activate gsplat_env
 
-python scripts/generate_flux_images.py --skip-existing
+python scripts/legacy/generate_flux_images.py --skip-existing
 ```
 
 Explicit inputs:
 
 ```bash
-python scripts/generate_flux_images.py \
+python scripts/legacy/generate_flux_images.py \
   --person-dir person \
   --prompts output/flux_prompts/flux_prompts.json \
   --skip-existing

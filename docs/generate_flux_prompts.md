@@ -31,13 +31,13 @@ MATH INSERT shots use graphic/educational style; WAN shots use cinematic photore
 ## Usage
 
 ```bash
-python scripts/generate_flux_prompts.py
+python scripts/legacy/generate_flux_prompts.py
 ```
 
 Process specific scenes only:
 
 ```bash
-python scripts/generate_flux_prompts.py --scene S0 --scene S1
+python scripts/legacy/generate_flux_prompts.py --scene S0 --scene S1
 ```
 
 Optional flags: `--input`, `--reference`, `--prompt`, `--model-path`, `--output-file`, `--max-new-tokens`, `--disable-thinking`.

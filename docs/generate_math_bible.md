@@ -20,6 +20,6 @@ Stage 1 — Mathematician Agent. Locks `core_visual_idea` and `explicitly_exclud
 ## Usage
 
 ```bash
-python scripts/generate_math_bible.py --input scripts/samples/input_docs.md
-python scripts/generate_math_bible.py --backend qwen --skip-gate
+python scripts/stages/generate_math_bible.py --input scripts/samples/input_docs.md
+python scripts/stages/generate_math_bible.py --backend qwen --skip-gate
 ```

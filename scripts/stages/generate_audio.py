@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 import math
+import re
 import wave
 from pathlib import Path
 
 from gemma_utils import fill_user_prompt, load_prompt_template
-from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, output_dir
+from paths import DEFAULT_LLM_BACKEND, PROJECT_ROOT, PROMPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_json
 
 SUB_MODULE = "audio"
 DEFAULT_SCREENPLAY = output_dir("screenplay") / "screenplay.json"
 DEFAULT_SERIES_BIBLE = output_dir("series_bible") / "series_bible.json"
 DEFAULT_STORYBOARD = output_dir("storyboard") / "storyboard.json"
+DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
 DEFAULT_DUB_PROMPT = PROMPTS_DIR / "audio_dubbing.md"
 
 DEFAULT_LANGUAGES = ["en", "hi", "ta"]
@@ -36,6 +44,78 @@ def words_per_minute_for_character(series_bible: dict, character: str) -> float:
 def estimate_line_duration(line: str, wpm: float) -> float:
     words = max(1, len(line.split()))
     return max(1.0, (words / wpm) * 60.0)
+
+
+def latex_to_speech(text: str) -> str:
+    spoken = text or ""
+    spoken = spoken.replace("$", "")
+    spoken = re.sub(r"\\text\{([^}]*)\}", r"\1", spoken)
+    spoken = re.sub(r"\\iff", " if and only if ", spoken)
+    spoken = re.sub(r"\\times", " times ", spoken)
+    spoken = re.sub(r"\\cdot", " dot ", spoken)
+    spoken = re.sub(r"\\sqrt\{([^}]*)\}", r" square root of \1 ", spoken)
+    spoken = re.sub(r"\\tan\^\{-1\}", " inverse tangent ", spoken)
+    spoken = re.sub(r"\\cos", " cosine ", spoken)
+    spoken = re.sub(r"\\sin", " sine ", spoken)
+    spoken = re.sub(r"\\theta", " theta ", spoken)
+    spoken = re.sub(r"\\pi", " pi ", spoken)
+    spoken = re.sub(r"\\[a-zA-Z]+", " ", spoken)
+    spoken = re.sub(r"[{}_^]", " ", spoken)
+    spoken = re.sub(r"\s+", " ", spoken).strip()
+    return spoken
+
+
+def build_math_narration(topic: dict) -> str:
+    equation = latex_to_speech(topic.get("equation", ""))
+    why = topic.get("why_this_tool") or topic.get("why_equation") or ""
+    visual = topic.get("core_visual_idea") or ""
+    parts = [topic.get("topic", "Math concept")]
+    if why:
+        parts.append(why)
+    if visual:
+        parts.append(visual)
+    if equation:
+        parts.append(f"The key equation is {equation}.")
+    return " ".join(parts)
+
+
+def collect_math_narration_lines(storyboard: dict, math_bible: dict) -> list[dict]:
+    topics = {t["id"]: t for t in math_bible.get("topics", [])}
+    lines: list[dict] = []
+    seen: set[tuple[str, int]] = set()
+
+    for scene in storyboard.get("scenes", []):
+        scene_id = scene["scene_id"]
+        topic_ids = scene.get("topic_ids") or []
+        for shot in scene.get("shots", []):
+            if (shot.get("type") or "").upper() != "MATH INSERT":
+                continue
+            key = (scene_id, shot.get("shot", 0))
+            if key in seen:
+                continue
+            seen.add(key)
+
+            topic = topics.get(topic_ids[0]) if topic_ids else None
+            if not topic and topic_ids:
+                for topic_id in topic_ids:
+                    if topic_id in topics:
+                        topic = topics[topic_id]
+                        break
+            if not topic:
+                continue
+
+            narration = build_math_narration(topic)
+            duration = float(shot.get("duration_seconds") or 8.0)
+            lines.append(
+                {
+                    "scene_id": scene_id,
+                    "shot": shot.get("shot"),
+                    "topic_id": topic.get("id"),
+                    "narration": narration,
+                    "estimated_duration_seconds": round(max(duration, estimate_line_duration(narration, DEFAULT_WPM)), 2),
+                }
+            )
+    return lines
 
 
 def collect_dialogue_lines(screenplay: dict, series_bible: dict) -> list[dict]:
@@ -164,12 +244,14 @@ def generate(
     screenplay_path: Path,
     series_bible_path: Path,
     storyboard_path: Path,
+    math_bible_path: Path,
     languages: list[str],
     dub_prompt_path: Path,
     backend: str,
     model_path: Path,
     synthesize: bool,
     skip_dub: bool,
+    voice_only: bool,
 ) -> dict:
     screenplay = json.loads(screenplay_path.read_text(encoding="utf-8"))
     series_bible = (
@@ -182,9 +264,15 @@ def generate(
         if storyboard_path.is_file()
         else {"scenes": []}
     )
+    math_bible = (
+        json.loads(math_bible_path.read_text(encoding="utf-8"))
+        if math_bible_path.is_file()
+        else {"topics": []}
+    )
 
     out_dir = output_dir(SUB_MODULE)
     lines = collect_dialogue_lines(screenplay, series_bible)
+    math_lines = collect_math_narration_lines(storyboard, math_bible)
     adjustments = reconcile_shot_durations(storyboard, lines)
 
     source_files: list[dict] = []
@@ -199,17 +287,38 @@ def generate(
             write_silent_wav(rel, line["estimated_duration_seconds"])
         source_files.append({**line, "path": str(rel.relative_to(out_dir.parent.parent)).replace("\\", "/")})
 
-    sfx_dir = out_dir / "sfx"
-    sfx_dir.mkdir(parents=True, exist_ok=True)
-    for scene in storyboard.get("scenes", []):
-        duration = scene.get("duration_seconds") or 30
-        sfx_path = sfx_dir / f"{scene['scene_id']}.wav"
-        if not sfx_path.is_file():
-            write_silent_wav(sfx_path, duration)
+    math_narration_files: list[dict] = []
+    math_dir = out_dir / "math_narration"
+    math_dir.mkdir(parents=True, exist_ok=True)
+    for entry in math_lines:
+        rel = math_dir / f"{entry['scene_id']}_shot{entry['shot']:02d}.wav"
+        duration = entry["estimated_duration_seconds"]
+        if synthesize:
+            voice = default_voice_for_character(series_bible, "M", "en")
+            ok = synthesize_with_edge_tts(entry["narration"], rel, voice)
+            if not ok:
+                write_silent_wav(rel, duration)
+        else:
+            write_silent_wav(rel, duration)
+        math_narration_files.append(
+            {
+                **entry,
+                "path": str(rel.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+            }
+        )
 
-    score_path = out_dir / "score" / "chapter_cue01.wav"
-    if not score_path.is_file():
-        write_silent_wav(score_path, 60.0)
+    if not voice_only:
+        sfx_dir = out_dir / "sfx"
+        sfx_dir.mkdir(parents=True, exist_ok=True)
+        for scene in storyboard.get("scenes", []):
+            duration = scene.get("duration_seconds") or 30
+            sfx_path = sfx_dir / f"{scene['scene_id']}.wav"
+            if not sfx_path.is_file():
+                write_silent_wav(sfx_path, duration)
+
+        score_path = out_dir / "score" / "chapter_cue01.wav"
+        if not score_path.is_file():
+            write_silent_wav(score_path, 60.0)
 
     dub_manifest: dict[str, list] = {}
     if not skip_dub:
@@ -261,9 +370,11 @@ def generate(
         "chapter": screenplay.get("chapter"),
         "languages": languages,
         "dialogue_lines": source_files,
+        "math_narration": math_narration_files,
         "timing_adjustments": adjustments,
         "dub": dub_manifest,
         "synthesize": synthesize,
+        "voice_only": voice_only,
     }
     return plan
 
@@ -281,15 +392,25 @@ def main() -> None:
     parser.add_argument("--screenplay", type=Path, default=DEFAULT_SCREENPLAY)
     parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
     parser.add_argument("--storyboard", type=Path, default=DEFAULT_STORYBOARD)
+    parser.add_argument("--math-bible", type=Path, default=DEFAULT_MATH_BIBLE)
     parser.add_argument("--languages", default=",".join(DEFAULT_LANGUAGES))
     parser.add_argument("--dub-prompt", type=Path, default=DEFAULT_DUB_PROMPT)
     parser.add_argument("--backend", choices=["gemma", "qwen"], default=DEFAULT_LLM_BACKEND)
     parser.add_argument("--model-path", type=Path, default=None)
     parser.add_argument("--synthesize", action="store_true", help="Use edge-tts when installed.")
+    parser.add_argument(
+        "--voice-only",
+        action="store_true",
+        help="Human VO + math narration only; no placeholder SFX/score (use stage 6b for BGM).",
+    )
     parser.add_argument("--skip-dub", action="store_true")
+    add_output_root_argument(parser)
     args = parser.parse_args()
 
     from paths import DEFAULT_GEMMA_MODEL
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
 
     if not args.screenplay.is_file():
         raise FileNotFoundError(f"screenplay not found: {args.screenplay}")
@@ -301,12 +422,14 @@ def main() -> None:
         screenplay_path=args.screenplay,
         series_bible_path=args.series_bible,
         storyboard_path=args.storyboard,
+        math_bible_path=args.math_bible,
         languages=languages,
         dub_prompt_path=args.dub_prompt,
         backend=args.backend,
         model_path=model_path,
         synthesize=args.synthesize,
         skip_dub=args.skip_dub,
+        voice_only=args.voice_only,
     )
 
     out_path = output_dir(SUB_MODULE) / "audio_plan.json"

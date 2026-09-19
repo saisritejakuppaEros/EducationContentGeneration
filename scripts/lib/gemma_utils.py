@@ -50,12 +50,82 @@ def extract_json_text(raw: str) -> str:
     return text
 
 
+def repair_json_string_escapes(json_text: str) -> str:
+    """Fix invalid or ambiguous backslash escapes in JSON strings (common with LaTeX)."""
+    out: list[str] = []
+    in_string = False
+    i = 0
+    length = len(json_text)
+
+    while i < length:
+        ch = json_text[i]
+        if not in_string:
+            out.append(ch)
+            if ch == '"':
+                in_string = True
+            i += 1
+            continue
+
+        if ch == "\\":
+            if i + 1 >= length:
+                out.append("\\\\")
+                i += 1
+                continue
+            nxt = json_text[i + 1]
+            if nxt == "u":
+                hex_part = json_text[i + 2 : i + 6]
+                if len(hex_part) == 4 and all(c in "0123456789abcdefABCDEF" for c in hex_part):
+                    out.append(json_text[i : i + 6])
+                    i += 6
+                    continue
+                out.append("\\\\")
+                out.append("u")
+                i += 2
+                continue
+            if nxt.isalpha():
+                j = i + 2
+                while j < length and json_text[j].isalpha():
+                    j += 1
+                run = json_text[i + 1 : j]
+                if len(run) == 1 and run in "bfnrt" and (j >= length or not json_text[j].isalpha()):
+                    out.append("\\")
+                    out.append(run)
+                else:
+                    out.append("\\\\")
+                    out.append(run)
+                i = j
+                continue
+            if nxt in '"\\/':
+                out.append(ch)
+                out.append(nxt)
+                i += 2
+                continue
+            out.append("\\\\")
+            out.append(nxt)
+            i += 2
+            continue
+
+        out.append(ch)
+        if ch == '"':
+            in_string = False
+        i += 1
+
+    return "".join(out)
+
+
 def parse_json_output(raw: str, validate) -> dict:
     json_text = extract_json_text(raw)
-    try:
-        data = json.loads(json_text)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Model output is not valid JSON: {exc}") from exc
+    last_exc: json.JSONDecodeError | None = None
+    data = None
+    for candidate in (json_text, repair_json_string_escapes(json_text)):
+        try:
+            data = json.loads(candidate)
+            break
+        except json.JSONDecodeError as exc:
+            last_exc = exc
+
+    if data is None:
+        raise ValueError(f"Model output is not valid JSON: {last_exc}") from last_exc
 
     if not isinstance(data, dict):
         raise ValueError("Model output must be a JSON object")

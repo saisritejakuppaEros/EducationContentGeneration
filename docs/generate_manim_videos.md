@@ -27,7 +27,7 @@ All artifacts under `output/manim_videos/`:
 source .venv/bin/activate
 export OPENAI_API_BASE=http://localhost:8000/v1
 
-python scripts/generate_manim_videos.py \
+python scripts/stages/generate_manim_videos.py \
   --storyboard output/storyboard/storyboard.json \
   --math-bible output/math_bible/math_bible.json \
   --scene SC02 --skip-existing

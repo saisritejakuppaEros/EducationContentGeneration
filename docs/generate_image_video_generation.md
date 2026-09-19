@@ -31,7 +31,7 @@ Each shot: `shot`, `time`, `duration_seconds`, `type`, `flux_frame`, `wan_motion
 ## Usage
 
 ```bash
-python scripts/generate_image_video_generation.py
+python scripts/legacy/generate_image_video_generation.py
 ```
 
 Optional flags: `--problem-statement`, `--math-linkup`, `--reference`, `--prompt`, `--model-path`, `--output-file`, `--max-new-tokens`, `--disable-thinking`.

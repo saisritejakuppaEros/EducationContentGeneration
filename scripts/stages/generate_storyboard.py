@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 from pathlib import Path
 
+from dialogue_utils import split_storyboard_shots
 from gemma_utils import fill_user_prompt, load_prompt_template
-from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, output_dir
+from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "storyboard"
@@ -175,6 +182,8 @@ def generate(
             max_tokens=max_tokens,
             enable_thinking=enable_thinking,
         )
+        if scene_payload.get("shots"):
+            scene_payload["shots"] = split_storyboard_shots(scene_payload["shots"])
 
         if scene_payload.get("shots"):
             last = scene_payload["shots"][-1]
@@ -240,9 +249,32 @@ def main() -> None:
     parser.add_argument("--max-tokens", type=int, default=8192)
     parser.add_argument("--disable-thinking", action="store_true")
     parser.add_argument("--skip-gate", action="store_true")
+    parser.add_argument(
+        "--fix-dialogue",
+        action="store_true",
+        help="Split long dialogue in an existing storyboard.json (no LLM).",
+    )
+    add_output_root_argument(parser)
     args = parser.parse_args()
 
     from paths import DEFAULT_GEMMA_MODEL
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
+
+    out_path = output_dir(SUB_MODULE) / "storyboard.json"
+
+    if args.fix_dialogue:
+        if not out_path.is_file():
+            raise FileNotFoundError(f"storyboard not found: {out_path}")
+        storyboard = json.loads(out_path.read_text(encoding="utf-8"))
+        out_dir = output_dir(SUB_MODULE)
+        for scene in storyboard.get("scenes", []):
+            scene["shots"] = split_storyboard_shots(scene.get("shots", []))
+            attach_keyframe_paths(scene, out_dir)
+        write_json(out_path, storyboard)
+        print(f"Fixed dialogue splits in {out_path}")
+        return
 
     for path in (args.screenplay, args.series_bible):
         if not path.is_file():

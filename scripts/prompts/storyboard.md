@@ -14,7 +14,7 @@ Every shot MUST include ALL fields:
 - reference_tags_used ({"M": "wide_full_body_neutral_pose"} — from series bible bank tags)
 - environment_detail (2–3 concrete set details)
 - blocking (physical positions and facing)
-- dialogue (single speaker line or null)
+- dialogue (single speaker line or null; max 15 words — split long lines into separate shots)
 - duration_seconds
 - flux_prompt (80–150 word Flux 2.0 prose for keyframe generation)
 

@@ -50,19 +50,19 @@ export OPENAI_API_BASE=http://localhost:8000/v1
 export OPENAI_API_KEY=sk-local
 export QWEN_MODEL=openai/Qwen/Qwen3.5-27B
 
-python scripts/generate_ltx_prompts.py --scene S0
+python scripts/legacy/generate_ltx_prompts.py --scene S0
 ```
 
 Default backend is **qwen** (vLLM). Use local Gemma instead:
 
 ```bash
-python scripts/generate_ltx_prompts.py --backend gemma
+python scripts/legacy/generate_ltx_prompts.py --backend gemma
 ```
 
 Process specific scenes only:
 
 ```bash
-python scripts/generate_ltx_prompts.py --scene S0 --scene S1
+python scripts/legacy/generate_ltx_prompts.py --scene S0 --scene S1
 ```
 
 Optional flags: `--input`, `--reference`, `--prompt`, `--backend`, `--qwen-model`, `--api-base`, `--model-path`, `--flux-images-dir`, `--output-file`, `--max-new-tokens`, `--temperature`, `--disable-thinking`.

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 import shutil
@@ -10,7 +16,7 @@ from diffusers.utils import load_image
 from PIL import Image
 
 from gemma_utils import fill_user_prompt, load_prompt_template
-from paths import DEFAULT_GEMMA_MODEL, DEFAULT_LLM_BACKEND, DEFAULT_PERSON_DIR, PROJECT_ROOT, PROMPTS_DIR, output_dir
+from paths import DEFAULT_GEMMA_MODEL, DEFAULT_LLM_BACKEND, DEFAULT_PERSON_DIR, PROJECT_ROOT, PROMPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "series_bible"
@@ -271,7 +277,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-inference-steps", type=int, default=28)
     parser.add_argument("--guidance-scale", type=float, default=4.0)
+    add_output_root_argument(parser)
     args = parser.parse_args()
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
 
     if not args.series_bible.is_file():
         raise FileNotFoundError(f"series_bible not found: {args.series_bible}")

@@ -11,7 +11,7 @@ Given a math bible JSON and optional series bible, write a chapter screenplay as
 
 Rules:
 1. Build a mini-arc: cold open → M poses problem → F+Y attempt and hit a wall → concept needed → F teaches Y → apply it → payoff/cliffhanger.
-2. Write real dialogue — character name + line. One speaker per dialogue entry.
+2. Write real dialogue — character name + line. One speaker per dialogue entry. Keep each line under 15 words; split longer thoughts into multiple entries.
 3. Every math_bible topic must appear in at least one scene (via topic_ids).
 4. Mark each scene type: STORY (cinematic), CONCEPT (Manim insert), or HYBRID (diegetic screen becomes Manim).
 5. Include teaching beats as F→Y dialogue, not vague stage direction.

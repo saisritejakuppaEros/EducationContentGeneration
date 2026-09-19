@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Callable
 
 from gemma_utils import load_gemma_model, run_gemma_json_with_model
-from paths import DEFAULT_GEMMA_MODEL, DEFAULT_LLM_BACKEND, PROJECT_ROOT, output_dir
+from paths import DEFAULT_GEMMA_MODEL, DEFAULT_LLM_BACKEND, PROJECT_ROOT, SCRIPTS_DIR, STAGES_DIR, output_dir
 
 PIPELINE_SUB_MODULE = "pipeline"
 
@@ -27,6 +27,13 @@ class Stage:
 
 STAGES: tuple[Stage, ...] = (
     Stage("0", "pipeline", "run_pipeline.py", "output/pipeline/state.json", "none"),
+    Stage(
+        "dir",
+        "directing_package",
+        "generate_directing_package.py",
+        "output/directing/directing_package.json",
+        "qwen",
+    ),
     Stage("1", "math_bible", "generate_math_bible.py", "output/math_bible/math_bible.json", "qwen"),
     Stage("2", "screenplay", "generate_screenplay.py", "output/screenplay/screenplay.json", "qwen"),
     Stage("3", "series_bible", "generate_series_bible.py", "output/series_bible/series_bible.json", "manual"),
@@ -36,6 +43,13 @@ STAGES: tuple[Stage, ...] = (
     Stage("5a", "cinematic_videos", "generate_cinematic_videos.py", "output/cinematic_videos/manifest.json", "manual"),
     Stage("5b", "manim_videos", "generate_manim_videos.py", "output/manim_videos/manifest.json", "manual"),
     Stage("6", "audio", "generate_audio.py", "output/audio/audio_plan.json", "manual"),
+    Stage(
+        "6b",
+        "background_audio",
+        "generate_background_audio.py",
+        "output/background_audio/manifest.json",
+        "manual",
+    ),
     Stage("7", "final_cut", "assemble_final_cut.py", "output/final_cut/", "manual"),
 )
 
@@ -114,10 +128,18 @@ def run_llm_json(
     raise ValueError(f"Unknown backend: {backend}. Use 'gemma' or 'qwen'.")
 
 
+def resolve_stage_script(script_name: str) -> Path:
+    staged = STAGES_DIR / script_name
+    if staged.is_file():
+        return staged
+    legacy = SCRIPTS_DIR / script_name
+    if legacy.is_file():
+        return legacy
+    raise FileNotFoundError(f"Pipeline script not found: {staged} (or {legacy})")
+
+
 def run_script(script_name: str, extra_args: list[str] | None = None) -> int:
-    script_path = PROJECT_ROOT / "scripts" / script_name
-    if not script_path.is_file():
-        raise FileNotFoundError(f"Pipeline script not found: {script_path}")
+    script_path = resolve_stage_script(script_name)
     cmd = [sys.executable, str(script_path), *(extra_args or [])]
     print(f"\n>>> {' '.join(cmd)}")
     return subprocess.call(cmd, cwd=str(PROJECT_ROOT))

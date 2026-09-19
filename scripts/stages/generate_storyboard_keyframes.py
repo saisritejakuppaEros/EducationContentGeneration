@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 from pathlib import Path
@@ -8,7 +14,8 @@ from diffusers import Flux2Pipeline
 from diffusers.utils import load_image
 from PIL import Image, ImageDraw
 
-from paths import PROJECT_ROOT, output_dir
+from cast_reference_utils import infer_characters_in_frame, resolve_cast_reference
+from paths import DEFAULT_PERSON_DIR, PROJECT_ROOT, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 
 SUB_MODULE = "storyboard"
 DEFAULT_STORYBOARD = output_dir(SUB_MODULE) / "storyboard.json"
@@ -133,6 +140,7 @@ def generate(
     cpu_offload: bool,
     skip_existing: bool,
     mask_retry: bool,
+    include_math_inserts: bool = False,
 ) -> dict:
     storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
     series_bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
@@ -150,7 +158,7 @@ def generate(
         for shot in scene.get("shots", []):
             if shot_numbers and shot["shot"] not in shot_numbers:
                 continue
-            if (shot.get("type") or "").upper() == "MATH INSERT":
+            if not include_math_inserts and (shot.get("type") or "").upper() == "MATH INSERT":
                 continue
             output_path = PROJECT_ROOT / shot.get("keyframe_image", "")
             if not str(output_path).endswith(".png"):
@@ -175,21 +183,41 @@ def generate(
         images: list[Image.Image] = []
         image_index = 1
         prompt_parts: list[str] = []
+        reference_log: list[dict] = []
 
         base_path = set_reference_image(series_bible, scene.get("title", ""))
         if base_path:
             images.append(load_image(str(base_path)).convert("RGB"))
             prompt_parts.append(f"environment from image {image_index}")
+            reference_log.append({"type": "environment", "path": str(base_path.relative_to(PROJECT_ROOT))})
             image_index += 1
 
         ref_tags = shot.get("reference_tags_used") or {}
-        for cast_key in shot.get("characters_in_frame") or []:
+        cast = series_bible.get("cast", {})
+        characters = infer_characters_in_frame(shot, cast)
+        for cast_key in characters:
             tag = ref_tags.get(cast_key, "front_neutral")
-            ref_path = bank_lookup(series_bible, cast_key, tag)
+            ref_path, ref_source = resolve_cast_reference(
+                series_bible=series_bible,
+                cast_key=cast_key,
+                tag=tag,
+                bank_lookup=bank_lookup,
+                source_dir=DEFAULT_PERSON_DIR,
+            )
             if ref_path:
                 images.append(load_image(str(ref_path)).convert("RGB"))
-                prompt_parts.append(f"the character {cast_key} from image {image_index}")
+                prompt_parts.append(f"the character {cast_key} from image {image_index}, identity preserved exactly")
+                reference_log.append(
+                    {
+                        "cast": cast_key,
+                        "tag": tag,
+                        "source": ref_source,
+                        "path": str(ref_path.relative_to(PROJECT_ROOT)),
+                    }
+                )
                 image_index += 1
+            else:
+                print(f"Warning: no reference photo for {scene_id} shot {shot_num} character {cast_key}")
 
         flux_prompt = shot.get("flux_prompt") or ""
         indexed_refs = ", ".join(prompt_parts)
@@ -235,6 +263,8 @@ def generate(
             "output": str(output_path.relative_to(PROJECT_ROOT)),
             "seed": shot_seed,
             "references_used": len(images),
+            "characters_in_frame": characters,
+            "reference_details": reference_log,
         }
         manifest["shots"] = [
             e for e in manifest.get("shots", []) if not (e["scene_id"] == scene_id and e["shot"] == shot_num)
@@ -263,8 +293,17 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=576)
     parser.add_argument("--no-cpu-offload", action="store_true")
     parser.add_argument("--skip-existing", action="store_true")
+    parser.add_argument(
+        "--include-math-inserts",
+        action="store_true",
+        help="Generate keyframes for MATH INSERT shots (use when Manim is disabled).",
+    )
     parser.add_argument("--mask-retry", action="store_true", help="Run face mask inpaint pass after base keyframe.")
+    add_output_root_argument(parser)
     args = parser.parse_args()
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
 
     if not args.storyboard.is_file():
         raise FileNotFoundError(f"storyboard not found: {args.storyboard}")
@@ -286,8 +325,9 @@ def main() -> None:
         cpu_offload=not args.no_cpu_offload,
         skip_existing=args.skip_existing,
         mask_retry=args.mask_retry,
+        include_math_inserts=args.include_math_inserts,
     )
-    print(f"Done. {len(manifest.get('shots', []))} keyframes in output/{SUB_MODULE}/")
+    print(f"Done. {len(manifest.get('shots', []))} keyframes in {project_rel(output_dir(SUB_MODULE))}/")
 
 
 if __name__ == "__main__":

@@ -19,6 +19,6 @@ Stage 3 — Character & Story Bible Agent. Seeds reference photo placeholders fo
 ## Usage
 
 ```bash
-python scripts/generate_series_bible.py
-python scripts/generate_series_bible.py --existing output/series_bible/series_bible.json
+python scripts/stages/generate_series_bible.py
+python scripts/stages/generate_series_bible.py --existing output/series_bible/series_bible.json
 ```

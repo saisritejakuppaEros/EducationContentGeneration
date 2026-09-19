@@ -51,7 +51,7 @@ fi
 
 for scene in "${SCENES[@]}"; do
   echo "========== $scene shot 2 =========="
-  python scripts/generate_manim_videos.py \
+  python scripts/stages/generate_manim_videos.py \
     --scene "$scene" \
     --shot 2 \
     --manim-model "$QWEN_MODEL" \

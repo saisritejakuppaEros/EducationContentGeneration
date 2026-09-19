@@ -51,7 +51,7 @@ echo "Extra:   ${EXTRA[*]:-(none)}"
 echo "Scenes:  ${SCENES[*]:-all renderable shots}"
 echo
 
-python scripts/generate_ltx_videos.py \
+python scripts/legacy/generate_ltx_videos.py \
   "${SCENE_ARGS[@]}" \
   --skip-existing \
   ${EXTRA+"${EXTRA[@]}"}

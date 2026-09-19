@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 import os
@@ -8,10 +14,10 @@ import torch
 from diffusers.utils import load_image
 from PIL import Image
 
-from paths import PROJECT_ROOT, output_dir
+from paths import PROJECT_ROOT, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel, resolve_project_path
 
 SUB_MODULE = "ltx_videos"
-DEFAULT_PROMPTS = PROJECT_ROOT / "output" / "ltx_prompts" / "ltx_prompts.json"
+DEFAULT_PROMPTS = output_dir("cinematic_videos") / "cinematic_prompts.json"
 DEFAULT_MODEL = "diffusers/LTX-2.3-Diffusers"
 DEFAULT_TALKING_HEAD_LORA = "elix3r/LTX-2.3-22b-AV-LoRA-talking-head"
 DEFAULT_TALKING_HEAD_WEIGHT = "LTX-2.3-22b-AV-LoRA-talking-head-v1.safetensors"
@@ -287,7 +293,7 @@ def generate(
         init_rel = shot.get("init_image")
         if not init_rel:
             raise ValueError(f"{scene_id} shot {shot_num}: missing init_image")
-        init_path = PROJECT_ROOT / init_rel
+        init_path = resolve_project_path(init_rel)
         pending.append((scene, shot, init_path, output_path))
 
     if not pending:
@@ -472,7 +478,11 @@ def main() -> None:
         help=f"Output directory name under output/ (default: {SUB_MODULE}).",
     )
     parser.add_argument("--skip-existing", action="store_true")
+    add_output_root_argument(parser)
     args = parser.parse_args()
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
 
     if not args.prompts.is_file():
         raise FileNotFoundError(f"Prompts file not found: {args.prompts}")
@@ -511,7 +521,7 @@ def main() -> None:
 
     print(
         f"Done. {len(manifest.get('shots', []))} shots tracked in "
-        f"output/{args.output_sub_module}/manifest.json"
+        f"{project_rel(output_dir(args.output_sub_module))}/manifest.json"
     )
 
 

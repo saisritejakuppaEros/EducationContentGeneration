@@ -66,7 +66,7 @@ Each stage has a **gate**: a review pass before the next stage runs. Text gates 
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/generate_math_bible.py` |
+| Script | `scripts/stages/generate_math_bible.py` |
 | Prompt | `scripts/prompts/math_bible.md` |
 | Sample schema | `scripts/samples/math_bible.json` |
 | Doc | `docs/generate_math_bible.md` |
@@ -108,7 +108,7 @@ Each stage has a **gate**: a review pass before the next stage runs. Text gates 
 **Run**
 
 ```bash
-python scripts/generate_math_bible.py \
+python scripts/stages/generate_math_bible.py \
   --input scripts/samples/input_docs.md \
   --output-file output/math_bible/math_bible.json
 ```
@@ -121,7 +121,7 @@ python scripts/generate_math_bible.py \
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/generate_screenplay.py` |
+| Script | `scripts/stages/generate_screenplay.py` |
 | Prompt | `scripts/prompts/screenplay.md` |
 | Sample schema | `scripts/samples/screenplay.json` |
 | Doc | `docs/generate_screenplay.md` |
@@ -170,7 +170,7 @@ python scripts/generate_math_bible.py \
 **Run**
 
 ```bash
-python scripts/generate_screenplay.py \
+python scripts/stages/generate_screenplay.py \
   --math-bible output/math_bible/math_bible.json \
   --output-dir output/screenplay
 ```
@@ -183,8 +183,8 @@ python scripts/generate_screenplay.py \
 
 | Deliverable | Path |
 |-------------|------|
-| Script (text bible) | `scripts/generate_series_bible.py` |
-| Script (photo bank) | `scripts/build_reference_bank.py` |
+| Script (text bible) | `scripts/stages/generate_series_bible.py` |
+| Script (photo bank) | `scripts/stages/build_reference_bank.py` |
 | Prompts | `scripts/prompts/series_bible.md`, `scripts/prompts/reference_bank.md` |
 | Sample schema | `scripts/samples/series_bible.json` |
 | Doc | `docs/generate_series_bible.md`, `docs/build_reference_bank.md` |
@@ -233,8 +233,8 @@ python scripts/generate_screenplay.py \
 **Run**
 
 ```bash
-python scripts/generate_series_bible.py --output-dir output/series_bible
-python scripts/build_reference_bank.py \
+python scripts/stages/generate_series_bible.py --output-dir output/series_bible
+python scripts/stages/build_reference_bank.py \
   --source person/ \
   --output-dir output/series_bible/reference_photos
 ```
@@ -247,8 +247,8 @@ python scripts/build_reference_bank.py \
 
 | Deliverable | Path |
 |-------------|------|
-| Script (shot breakdown) | `scripts/generate_storyboard.py` |
-| Script (keyframes) | `scripts/generate_storyboard_keyframes.py` |
+| Script (shot breakdown) | `scripts/stages/generate_storyboard.py` |
+| Script (keyframes) | `scripts/stages/generate_storyboard_keyframes.py` |
 | Prompts | `scripts/prompts/storyboard.md`, `scripts/prompts/storyboard_keyframe.md` |
 | Sample schema | `scripts/samples/storyboard.json` |
 | Doc | `docs/generate_storyboard.md`, `docs/generate_storyboard_keyframes.md` |
@@ -334,12 +334,12 @@ New sets get their reference plate generated once (no character refs) and saved 
 **Run**
 
 ```bash
-python scripts/generate_storyboard.py \
+python scripts/stages/generate_storyboard.py \
   --screenplay output/screenplay/screenplay.json \
   --series-bible output/series_bible/series_bible.json \
   --output-dir output/storyboard
 
-python scripts/generate_storyboard_keyframes.py \
+python scripts/stages/generate_storyboard_keyframes.py \
   --storyboard output/storyboard/storyboard.json \
   --skip-existing
 ```
@@ -352,7 +352,7 @@ python scripts/generate_storyboard_keyframes.py \
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/generate_cinematic_videos.py` |
+| Script | `scripts/stages/generate_cinematic_videos.py` |
 | Prompt | `scripts/prompts/cinematic_video.md` |
 | Doc | `docs/generate_cinematic_videos.md` |
 | Output | `output/cinematic_videos/<scene_id>/<scene_id>_shot##.mp4` |
@@ -370,7 +370,7 @@ python scripts/generate_storyboard_keyframes.py \
 
 ```bash
 export OPENAI_API_BASE=http://localhost:8000/v1
-python scripts/generate_cinematic_videos.py --scene SC03 --skip-existing
+python scripts/stages/generate_cinematic_videos.py --scene SC03 --skip-existing
 ```
 
 ---
@@ -381,7 +381,7 @@ python scripts/generate_cinematic_videos.py --scene SC03 --skip-existing
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/generate_manim_videos.py` (adapt existing) |
+| Script | `scripts/stages/generate_manim_videos.py` (adapt existing) |
 | Doc | `docs/generate_manim_videos.md` (update) |
 | Output | `output/manim_videos/<topic_id>.mp4` |
 | Source | `output/manim_videos/<topic_id>.py` |
@@ -394,7 +394,7 @@ python scripts/generate_cinematic_videos.py --scene SC03 --skip-existing
 
 ```bash
 source .venv/bin/activate
-python scripts/generate_manim_videos.py \
+python scripts/stages/generate_manim_videos.py \
   --math-bible output/math_bible/math_bible.json \
   --topic 1.1
 ```
@@ -407,7 +407,7 @@ python scripts/generate_manim_videos.py \
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/generate_audio.py` |
+| Script | `scripts/stages/generate_audio.py` |
 | Prompts | `scripts/prompts/audio_timing.md`, `scripts/prompts/audio_dubbing.md` |
 | Doc | `docs/generate_audio.md` |
 | Output | see layout below |
@@ -440,7 +440,7 @@ output/audio/
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/assemble_final_cut.py` |
+| Script | `scripts/stages/assemble_final_cut.py` |
 | Doc | `docs/assemble_final_cut.md` |
 | Output | `output/final_cut/<chapter_title>_<lang>.mp4`, `output/final_cut/<chapter_title>.edl` |
 
@@ -458,7 +458,7 @@ output/audio/
 **Run**
 
 ```bash
-python scripts/assemble_final_cut.py \
+python scripts/stages/assemble_final_cut.py \
   --storyboard output/storyboard/storyboard.json \
   --languages en,hi,ta
 ```

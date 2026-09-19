@@ -30,7 +30,7 @@ Each topic has `id`, `topic`, `story_beat`, `why_in_story`.
 ## Usage
 
 ```bash
-python scripts/generate_problem_statement_buildup.py
+python scripts/legacy/generate_problem_statement_buildup.py
 ```
 
 Optional flags: `--input`, `--reference`, `--prompt`, `--model-path`, `--output-file`, `--max-new-tokens`, `--disable-thinking`.

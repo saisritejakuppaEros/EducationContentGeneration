@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 from pathlib import Path
 
+from dialogue_utils import split_screenplay_dialogue
 from gemma_utils import fill_user_prompt, load_prompt_template
-from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, output_dir
+from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "screenplay"
@@ -123,6 +130,7 @@ def generate(
         max_tokens=max_tokens,
         enable_thinking=enable_thinking,
     )
+    result = split_screenplay_dialogue(result)
 
     if skip_gate:
         write_gate(SUB_MODULE, passed=True, notes="Gate skipped via --skip-gate")
@@ -147,9 +155,13 @@ def main() -> None:
     parser.add_argument("--max-tokens", type=int, default=8192)
     parser.add_argument("--disable-thinking", action="store_true")
     parser.add_argument("--skip-gate", action="store_true")
+    add_output_root_argument(parser)
     args = parser.parse_args()
 
     from paths import DEFAULT_GEMMA_MODEL
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
 
     if not args.math_bible.is_file():
         raise FileNotFoundError(f"math_bible not found: {args.math_bible}")

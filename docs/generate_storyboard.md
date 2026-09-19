@@ -19,6 +19,6 @@ Stage 4a — Storyboard Agent shot breakdown with lens, scale, blocking, and Flu
 ## Usage
 
 ```bash
-python scripts/generate_storyboard.py --scene SC01
-python scripts/generate_storyboard.py --backend qwen
+python scripts/stages/generate_storyboard.py --scene SC01
+python scripts/stages/generate_storyboard.py --backend qwen
 ```

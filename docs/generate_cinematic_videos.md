@@ -22,6 +22,8 @@ Stage 5a — Cinematic Video Agent. Wraps prompt generation + `generate_ltx_vide
 
 ```bash
 export OPENAI_API_BASE=http://localhost:8000/v1
-python scripts/generate_cinematic_videos.py --prompts-only
-python scripts/generate_cinematic_videos.py --scene SC01 --skip-existing
+python scripts/stages/generate_cinematic_videos.py --deterministic-prompts --prompts-only
+python scripts/stages/generate_cinematic_videos.py --deterministic-prompts --scene SC01 --skip-existing
 ```
+
+Use `--deterministic-prompts` to build LTX prompts without an LLM. Visual prompts strip on-screen text; speech is capped at 15 words.

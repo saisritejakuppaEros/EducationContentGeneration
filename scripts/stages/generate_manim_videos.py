@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import _bootstrap  # noqa: F401
+
 import argparse
 import json
 import os
@@ -14,7 +20,7 @@ from manim_generator.utils.parsing import SceneParsingError, extract_scene_class
 from manim_generator.utils.usage import format_duration, get_usage_totals
 from manim_generator.utils.video import render_and_concat
 from manim_generator.workflow import ManimWorkflow
-from paths import DEFAULT_QWEN_MODEL, PROJECT_ROOT, output_dir
+from paths import DEFAULT_QWEN_MODEL, PROJECT_ROOT, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 
 SUB_MODULE = "manim_videos"
 MANIM_GENERATOR_ROOT = PROJECT_ROOT / "scripts" / "manim-generator"
@@ -31,7 +37,7 @@ def manim_generator_cwd():
         os.chdir(previous)
 DEFAULT_STORYBOARD = output_dir("storyboard") / "storyboard.json"
 DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
-DEFAULT_MATH_LINKUP = PROJECT_ROOT / "output" / "ps_math_linkup" / "ps_math_linkup.json"
+DEFAULT_MATH_LINKUP = output_dir("ps_math_linkup") / "ps_math_linkup.json"
 
 DEFAULT_MANIM_MODEL = DEFAULT_QWEN_MODEL
 DEFAULT_REVIEW_MODEL = DEFAULT_QWEN_MODEL
@@ -531,7 +537,11 @@ def main() -> None:
         action="store_true",
         help="Print built video_data prompts without calling the LLM.",
     )
+    add_output_root_argument(parser)
     args = parser.parse_args()
+
+    configure_output_root(args.output_root)
+    print(f"Output root: {project_rel(get_output_root())}/")
 
     math_path = args.math_linkup or args.math_bible
     if not args.storyboard.is_file():

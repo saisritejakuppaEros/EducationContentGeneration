@@ -20,5 +20,5 @@ Stage 2 — Screenwriter Agent. Produces JSON + human-readable Markdown review c
 ## Usage
 
 ```bash
-python scripts/generate_screenplay.py --math-bible output/math_bible/math_bible.json
+python scripts/stages/generate_screenplay.py --math-bible output/math_bible/math_bible.json
 ```
