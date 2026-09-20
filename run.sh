@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Textbook video run: .venv for LLM + MiniMax-H3 video; gsplat_env for Flux keyframes (and LTX if --video-backend ltx).
+# Textbook video run: .venv for LLM; gsplat_env for Flux keyframes; video = local MiniMax-H3 (ComfyUI) or LTX.
 set -euo pipefail
 
 cd /devwork/teja/EducationContentGeneration
@@ -63,15 +63,47 @@ else
   echo "Skip BGM — $RUN/background_audio/manifest.json exists"
 fi
 
+# --- Cast reference bank (multi-angle FLUX edits from cartoon master) ---
+REF_BANK="output/textbooks/${BOOK_ID}/series_profile/reference_photos/manifest.json"
+if [[ ! -f "$REF_BANK" ]]; then
+  (
+    source "$CONDA_SH"
+    conda activate gsplat_env
+    export HF_HOME HF_HUB_CACHE
+    python3 scripts/stages/build_reference_bank.py \
+      --series-profile "output/textbooks/${BOOK_ID}/series_profile/series_profile.json" \
+      --output-dir "output/textbooks/${BOOK_ID}/series_profile/reference_photos" \
+      --output-root output \
+      --skip-existing \
+      --tag close_up_neutral \
+      --tag wide_full_body_neutral_pose \
+      --tag three_quarter_left \
+      --tag three_quarter_right
+  )
+else
+  echo "Skip reference bank — $REF_BANK exists"
+fi
+
 # --- GPU pixels (must use gsplat_env) ---
-# export MINIMAX_API_KEY=...   # required for default MiniMax-H3 clip generation
+# Local MiniMax-H3 (ComfyUI) — set before pixels, or use --video-backend ltx:
+# export COMFYUI_SERVER_URL=http://127.0.0.1:8188
+# export MINIMAX_H3_I2V_WORKFLOW=/path/to/minimax_h3_i2v_api.json
+# export MINIMAX_H3_I2V_PATCH=/path/to/minimax_h3_i2v.patch.json
+# export MINIMAX_H3_OUTPUT_NODE=...
 run_gpu_pixels \
   --book-id "$BOOK_ID" \
   --video-id "$VIDEO_ID" \
   --output-root output \
   --gpu 1 \
   --skip-existing \
-  --video-backend minimax
+  --video-backend minimax_h3
+
+# --- VO (consistent narrator; not baked into video model) ---
+python3 scripts/run_pipeline.py \
+  --output-root "$RUN" \
+  --from-stage 6 \
+  --to-stage 6 \
+  --skip-reference-bank
 
 # --- Mux / QC (no vLLM, .venv is fine) ---
 python3 scripts/run_pipeline.py \

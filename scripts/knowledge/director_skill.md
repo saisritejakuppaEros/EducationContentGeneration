@@ -146,7 +146,7 @@ Scale linearly for 8:00 or 10:00 (see 5.2). Timestamps are targets; keep beat pr
 ## 6. Visual Direction
 
 ### 6.1 Visual grammar per video (choose and lock)
-- **One art style** (see 6.4 style bible) for the whole video. Never mix styles.
+- **One art style** (see 6.4 style guide) for the whole video. Never mix styles.
 - **One persistent anchor** in 40-60% of scenes (see 6.2).
 - **On-screen text as a second narrator** in ~50-70% of scenes: key term, number, 3-5 word label. Never full sentences.
 - **Mode mix target (of scenes):**
@@ -174,9 +174,9 @@ Create ONE recurring character per channel: simple silhouette, 2-3 colours, expr
 - Expect **80-110 scenes** in 9:00. Unique generated images: **50-70**; the rest are re-uses, crops, zooms, pans or text-card variants of the same assets.
 - Every scene has a **motion instruction** (slow zoom-in, pan L->R, parallax layers, wipe-build, pop-in labels). No static frame longer than 6 s without motion or on-screen change.
 
-### 6.4 Style Bible (write ONCE at the top of every package, reuse verbatim)
+### 6.4 Style Guide (write ONCE at the top of every package, reuse verbatim)
 ```
-STYLE BIBLE
+STYLE GUIDE
 - Look: <flat vector | paper-cut | soft watercolour | isometric | chalkboard>
 - Palette: 5 colours with hex (bg, primary, secondary, accent/danger, neutral)
 - Line: <none | 3px rounded dark line>
@@ -190,7 +190,7 @@ STYLE BIBLE
 ```
 [SCENE ID] S07
 PROMPT: <subject + action>, <setting>, <camera: wide/medium/close, angle>, <composition: rule of thirds, empty space at top for caption>,
-STYLE: <paste Style Bible look + palette + line + lighting>,
+STYLE: <paste Style Guide look + palette + line + lighting>,
 ANCHOR (if present): <fixed anchor prompt block>,
 MOOD: <one word>,
 NEGATIVE: text, letters, watermark, logo, extra fingers, photoreal face, clutter
@@ -301,7 +301,7 @@ Rules:
 # <Video title>  |  Class <X> <Subject> - Ch <N> <Name>
 ## 0. Chapter Brief
 core question - key terms (<=6) - engine - misconceptions - syllabus boundary - persona - audio role - tone dial
-## 1. Style Bible (6.4)
+## 1. Style Guide (6.4)
 ## 2. Beat Sheet (table, timestamps, turn markers T1..Tn, music intensity)
 ## 3. Full Script with timestamps
    [00:00-00:30] BEAT 1 HOOK
@@ -358,7 +358,7 @@ T1 [00:20]: "But if that's true - why do we water plants at all?"
 - [ ] Age-appropriate reading level for the class
 
 **Visual**
-- [ ] One style bible, applied to every prompt; no text baked into images
+- [ ] One style guide, applied to every prompt; no text baked into images
 - [ ] Anchor in 40-60% of scenes; on-screen text in ~50-70%
 - [ ] Scene length rules met; every scene has motion
 - [ ] Unique images <= ~70; reuse plan defined
@@ -393,4 +393,21 @@ T1 [00:20]: "But if that's true - why do we water plants at all?"
 
 ## 13. Series-level consistency (when making multiple videos)
 
-Fix once and reuse: channel name, anchor character + prompt block, style bible, palette, sign-on/sign-off lines, myth-flip sound, brand sting (2 s), end-screen layout, title template, and the "Guess?" recall card. Consistency is what turns 30 separate videos into a channel.
+Fix once and reuse: channel name, anchor character + prompt block, style guide, palette, sign-on/sign-off lines, myth-flip sound, brand sting (2 s), end-screen layout, title template, and the "Guess?" recall card. Consistency is what turns 30 separate videos into a channel.
+
+---
+
+## 14. Production modes & downstream skills
+
+| Mode | When | Extra skills |
+|------|------|----------------|
+| `explainer` (default) | NCERT 8–10 min units | This file + `context.md` |
+| `continuous_animation` | Shot-to-shot acting motion | `visual_continuity.md`, CoT shot plan |
+| `collage_hook` | ≤30 s social hook | Vox beat-layer (see `MODULE_COMPARISON.md`) |
+
+**Always load for pixels + mux:**
+
+- `visual_continuity.md` — reference bank, keyframe tags, no mascot-as-background.
+- `audio_director.md` — single `narration_voice`; stage 6 TTS, not clip VO.
+
+**Pipeline hooks:** `build_reference_bank.py` → `generate_storyboard_keyframes.py` (`--mask-retry`) → video backend → `generate_audio.py --synthesize` → `assemble_final_cut.py`.

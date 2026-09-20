@@ -13,9 +13,9 @@ from gemma_utils import fill_user_prompt, load_prompt_template
 from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
-SUB_MODULE = "series_bible"
-DEFAULT_REFERENCE = SAMPLES_DIR / "series_bible.json"
-DEFAULT_PROMPT = PROMPTS_DIR / "series_bible.md"
+SUB_MODULE = "series_profile"
+DEFAULT_REFERENCE = SAMPLES_DIR / "series_profile.json"
+DEFAULT_PROMPT = PROMPTS_DIR / "series_profile.md"
 DEFAULT_SCREENPLAY = output_dir("screenplay") / "screenplay.json"
 DEFAULT_TEXTBOOK = "Intermediate Mathematics"
 DEFAULT_TONE = "Interstellar-adjacent grounded sci-fi"
@@ -32,17 +32,17 @@ REFERENCE_TAGS = [
 ]
 
 
-def validate_series_bible(data: dict) -> None:
+def validate_series_profile(data: dict) -> None:
     for key in ("textbook_title", "target_tone", "cast", "world", "visual_grammar", "chapters_so_far"):
         if key not in data:
-            raise ValueError(f"series_bible missing '{key}'")
+            raise ValueError(f"series_profile missing '{key}'")
     for cast_key in ("M", "F", "Y"):
         if cast_key not in data["cast"]:
             raise ValueError(f"cast missing '{cast_key}'")
 
 
-def ensure_reference_photo_placeholders(bible: dict) -> dict:
-    for cast_key, info in bible.get("cast", {}).items():
+def ensure_reference_photo_placeholders(profile: dict) -> dict:
+    for cast_key, info in profile.get("cast", {}).items():
         photos = info.get("reference_photos") or []
         existing_tags = {p.get("tag") for p in photos}
         for tag in REFERENCE_TAGS:
@@ -51,19 +51,19 @@ def ensure_reference_photo_placeholders(bible: dict) -> dict:
             photos.append(
                 {
                     "tag": tag,
-                    "path": f"output/series_bible/reference_photos/{cast_key}/{tag}.png",
+                    "path": f"output/series_profile/reference_photos/{cast_key}/{tag}.png",
                     "source": "pending",
                 }
             )
         info["reference_photos"] = photos
-    return bible
+    return profile
 
 
 def generate(
     *,
     textbook_title: str,
     target_tone: str,
-    existing_bible_path: Path | None,
+    existing_profile_path: Path | None,
     screenplay_path: Path | None,
     reference_path: Path,
     prompt_path: Path,
@@ -74,8 +74,8 @@ def generate(
     enable_thinking: bool,
 ) -> dict:
     existing = (
-        existing_bible_path.read_text(encoding="utf-8")
-        if existing_bible_path and existing_bible_path.is_file()
+        existing_profile_path.read_text(encoding="utf-8")
+        if existing_profile_path and existing_profile_path.is_file()
         else "{}"
     )
     screenplay = (
@@ -89,7 +89,7 @@ def generate(
         user_template,
         textbook_title=textbook_title,
         target_tone=target_tone,
-        existing_series_bible=existing,
+        existing_series_profile=existing,
         new_chapter_screenplay=screenplay,
         reference_output=reference_output,
     )
@@ -98,7 +98,7 @@ def generate(
         backend=backend,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        validate=validate_series_bible,
+        validate=validate_series_profile,
         model_path=model_path,
         max_new_tokens=max_new_tokens,
         max_tokens=max_tokens,
@@ -108,10 +108,10 @@ def generate(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate or update series_bible.json.")
+    parser = argparse.ArgumentParser(description="Generate or update series_profile.json.")
     parser.add_argument("--textbook-title", default=DEFAULT_TEXTBOOK)
     parser.add_argument("--target-tone", default=DEFAULT_TONE)
-    parser.add_argument("--existing", type=Path, default=None, help="Existing series_bible.json to update.")
+    parser.add_argument("--existing", type=Path, default=None, help="Existing series_profile.json to update.")
     parser.add_argument("--screenplay", type=Path, default=DEFAULT_SCREENPLAY)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
@@ -130,14 +130,14 @@ def main() -> None:
 
     model_path = args.model_path or DEFAULT_GEMMA_MODEL
     out_dir = output_dir(SUB_MODULE)
-    out_path = out_dir / "series_bible.json"
+    out_path = out_dir / "series_profile.json"
 
     existing_path = args.existing or (out_path if out_path.is_file() else None)
 
     result = generate(
         textbook_title=args.textbook_title,
         target_tone=args.target_tone,
-        existing_bible_path=existing_path,
+        existing_profile_path=existing_path,
         screenplay_path=args.screenplay if args.screenplay.is_file() else None,
         reference_path=args.reference,
         prompt_path=args.prompt,

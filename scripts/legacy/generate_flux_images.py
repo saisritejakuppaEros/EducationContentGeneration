@@ -207,7 +207,7 @@ def generate(
     skip_existing: bool,
 ) -> dict:
     data = json.loads(prompts_path.read_text(encoding="utf-8"))
-    cast = data.get("visual_style_bible", {}).get("cast", {})
+    cast = data.get("visual_style_guide", {}).get("cast", {})
     photo_paths = cast_photo_paths(person_dir, cast_photos)
 
     out_dir = output_dir(SUB_MODULE)

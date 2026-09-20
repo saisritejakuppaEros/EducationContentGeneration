@@ -223,7 +223,7 @@ def merge_enhancements(
 def enhance_scene(
     *,
     scene: dict,
-    visual_style_bible: dict,
+    visual_style_guide: dict,
     tone_target: str,
     system_prompt: str,
     user_template: str,
@@ -263,7 +263,7 @@ def enhance_scene(
 
     user_prompt = fill_user_prompt(
         user_template,
-        visual_style_bible=json.dumps(visual_style_bible, indent=2),
+        visual_style_guide=json.dumps(visual_style_guide, indent=2),
         tone_target=tone_target,
         scene_json=json.dumps(scene_payload, indent=2),
         reference_output=reference_output,
@@ -326,7 +326,7 @@ def generate(
         "model_target": "ltx-2.3",
         "prompt_framework": "LTX AV — [VISUAL] [SPEECH] [SOUNDS]",
         "tone_target": source.get("tone_target", ""),
-        "visual_style_bible": source["visual_style_bible"],
+        "visual_style_guide": source["visual_style_guide"],
         "scenes": [],
     }
 
@@ -340,7 +340,7 @@ def generate(
         print(f"Writing LTX prompts for {scene['scene_id']} ({len(scene['shots'])} shots)...")
         merged_shots = enhance_scene(
             scene=scene,
-            visual_style_bible=source["visual_style_bible"],
+            visual_style_guide=source["visual_style_guide"],
             tone_target=source.get("tone_target", ""),
             system_prompt=system_prompt,
             user_template=user_template,

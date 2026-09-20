@@ -41,9 +41,9 @@ Write LTX prompts for this scene's shots.
 {{scene_shots}}
 </scene_shots>
 
-<series_bible>
-{{series_bible}}
-</series_bible>
+<series_profile>
+{{series_profile}}
+</series_profile>
 
 <previous_shot_motion>
 {{previous_shot_motion}}

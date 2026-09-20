@@ -173,7 +173,7 @@ def generate_staged(
         user_prompt=fill_user_prompt(
             user3,
             title=core.get("recommended_title") or core.get("title", ""),
-            style_bible_excerpt=(core.get("style_bible") or "")[:800],
+            style_guide_excerpt=(core.get("style_guide") or "")[:800],
             scene_summary_json=json.dumps(scene_summary, ensure_ascii=False),
             image_prompt_max=str(budget["image_prompt_max"]),
         ),

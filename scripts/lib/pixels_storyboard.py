@@ -69,7 +69,7 @@ def storyboard_from_decomposition(
         "chapter": decomp.get("chapter"),
         "tone_target": decomp.get("tone_target"),
         "total_runtime_target": decomp.get("total_runtime_target"),
-        "visual_style_bible": decomp.get("visual_style_bible") or {},
+        "visual_style_guide": decomp.get("visual_style_guide") or {},
         "scenes": scenes_out,
         "source": "shot_decomposition",
     }

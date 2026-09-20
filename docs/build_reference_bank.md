@@ -8,14 +8,14 @@ Stage 3b — expands single source photos into tagged reference sets for storybo
 
 ## Inputs
 
-- `output/series_bible/series_bible.json`
+- `output/series_profile/series_profile.json`
 - `assets/images/` source photos (`ramanujan.jpeg`, `friend.png`)
 - `scripts/prompts/reference_bank.md`
 
 ## Outputs
 
-- `output/series_bible/reference_photos/{M,F,Y}/*.png`
-- `output/series_bible/reference_photos/manifest.json`
+- `output/series_profile/reference_photos/{M,F,Y}/*.png`
+- `output/series_profile/reference_photos/manifest.json`
 
 ## Usage
 

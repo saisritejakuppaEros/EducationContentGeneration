@@ -38,9 +38,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--video-backend",
-        choices=("minimax", "ltx"),
-        default="minimax",
-        help="Cinematic clips: minimax (MiniMax-H3 API) or ltx (local GPU).",
+        choices=("ltx", "minimax_h3", "minimax_api"),
+        default="minimax_h3",
+        help="Cinematic clips: minimax_h3 (local ComfyUI), ltx (local LTX), or minimax_api.",
     )
     add_output_root_argument(parser)
     args = parser.parse_args()
@@ -58,9 +58,9 @@ def main() -> None:
     if not decomp_path.is_file():
         raise FileNotFoundError(f"Run shot decomposition first: {decomp_path}")
 
-    series_bible = get_output_root() / "textbooks" / args.book_id / "series_bible" / "series_bible.json"
-    if not series_bible.is_file():
-        raise FileNotFoundError(series_bible)
+    series_profile = get_output_root() / "textbooks" / args.book_id / "series_profile" / "series_profile.json"
+    if not series_profile.is_file():
+        raise FileNotFoundError(series_profile)
 
     pixels_board = video_root / "shots" / "pixels_storyboard.json"
     keyframes_prefix = project_rel(video_root / "shots" / "keyframes")
@@ -74,8 +74,8 @@ def main() -> None:
         kf_args = [
             "--storyboard",
             str(pixels_board),
-            "--series-bible",
-            str(series_bible),
+            "--series-profile",
+            str(series_profile),
             "--keyframes-subdir",
             "shots/keyframes",
             "--shot-decomposition",
@@ -86,6 +86,7 @@ def main() -> None:
         ]
         if args.skip_existing:
             kf_args.append("--skip-existing")
+        kf_args.append("--mask-retry")
         if args.scene_ids:
             for sid in args.scene_ids:
                 kf_args.extend(["--scene", sid])
@@ -101,8 +102,8 @@ def main() -> None:
     cin_args = [
         "--storyboard",
         str(pixels_board),
-        "--series-bible",
-        str(series_bible),
+        "--series-profile",
+        str(series_profile),
         "--deterministic-prompts",
         "--output-root",
         out_flag,

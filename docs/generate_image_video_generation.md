@@ -18,11 +18,11 @@ Stage 3 of the textbook-to-movie pipeline: decompose the story and math into sec
 
 All artifacts go under `output/image_video_generation/`:
 
-- `image_video_generation.json` — visual style bible + scenes + shots
+- `image_video_generation.json` — visual style guide + scenes + shots
 
 ## JSON shape
 
-Top-level: `story_title`, `tone_target`, `total_runtime_target`, `visual_style_bible`, `scenes`.
+Top-level: `story_title`, `tone_target`, `total_runtime_target`, `visual_style_guide`, `scenes`.
 
 Each scene: `scene_id`, `chapter`, `render_type` (wan/manim/mixed), `topic_ids`, timing, `beat`, `shots[]`.
 

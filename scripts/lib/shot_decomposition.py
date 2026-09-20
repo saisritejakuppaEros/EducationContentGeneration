@@ -178,7 +178,7 @@ def build_shot_decomposition(
     package: dict,
     *,
     target_runtime_seconds: int | None = None,
-    series_bible: dict | None = None,
+    series_profile: dict | None = None,
 ) -> dict:
     scene_table = list(package.get("scene_table") or [])
     if not scene_table:
@@ -190,15 +190,15 @@ def build_shot_decomposition(
         else package.get("runtime_target_seconds")
         or 600
     )
-    style = (package.get("style_bible") or "Bright flat 2D cartoon explainer.").strip()
+    style = (package.get("style_guide") or "Bright flat 2D cartoon explainer.").strip()
     prompts = _index_image_prompts(package.get("image_prompts") or [])
     vo_map = _beat_vo_chunks(package.get("script") or [], scene_table)
     scaled_durs = _scale_durations(scene_table, float(target))
 
-    visual_style_bible: dict[str, Any] = {"style_summary": style[:500]}
-    if series_bible:
-        visual_style_bible["cast"] = series_bible.get("cast") or {}
-        visual_style_bible["reference_root"] = series_bible.get("reference_photos_root")
+    visual_style_guide: dict[str, Any] = {"style_summary": style[:500]}
+    if series_profile:
+        visual_style_guide["cast"] = series_profile.get("cast") or {}
+        visual_style_guide["reference_root"] = series_profile.get("reference_photos_root")
 
     scenes_out: list[dict] = []
     narration_timeline: list[dict] = []
@@ -275,7 +275,7 @@ def build_shot_decomposition(
         "total_runtime_target_seconds": target,
         "total_runtime_seconds": total_runtime,
         "total_runtime_target": format_timestamp(total_runtime),
-        "visual_style_bible": visual_style_bible,
+        "visual_style_guide": visual_style_guide,
         "audio_cue_sheet": audio_cues,
         "narration_timeline": narration_timeline,
         "scenes": scenes_out,
@@ -328,16 +328,16 @@ def write_shot_decomposition(
     out_dir: Path,
     *,
     target_runtime_seconds: int | None = None,
-    series_bible_path: Path | None = None,
+    series_profile_path: Path | None = None,
 ) -> Path:
     package = json.loads(package_path.read_text(encoding="utf-8"))
-    series_bible = None
-    if series_bible_path and series_bible_path.is_file():
-        series_bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
+    series_profile = None
+    if series_profile_path and series_profile_path.is_file():
+        series_profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
     decomp = build_shot_decomposition(
         package,
         target_runtime_seconds=target_runtime_seconds,
-        series_bible=series_bible,
+        series_profile=series_profile,
     )
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "shot_decomposition.json"

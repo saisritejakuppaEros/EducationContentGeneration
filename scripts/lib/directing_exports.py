@@ -36,7 +36,7 @@ def render_story_overview_md(package: dict) -> str:
     lines = [
         f"# Story overview: {title}",
         "",
-        package.get("style_bible", ""),
+        package.get("style_guide", ""),
         "",
         "## Beat sheet",
         "",

@@ -36,7 +36,7 @@ def manim_generator_cwd():
     finally:
         os.chdir(previous)
 DEFAULT_STORYBOARD = output_dir("storyboard") / "storyboard.json"
-DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
+DEFAULT_TOPIC_SPECS = output_dir("topic_specs") / "topic_specs.json"
 DEFAULT_MATH_LINKUP = output_dir("ps_math_linkup") / "ps_math_linkup.json"
 
 DEFAULT_MANIM_MODEL = DEFAULT_QWEN_MODEL
@@ -61,8 +61,8 @@ def load_math_topics(linkup_path: Path) -> dict[str, dict]:
     return topics
 
 
-def math_insert_set_description(visual_style_bible: dict) -> str:
-    for entry in visual_style_bible.get("sets", []):
+def math_insert_set_description(visual_style_guide: dict) -> str:
+    for entry in visual_style_guide.get("sets", []):
         name = (entry.get("name") or "").lower()
         if "math" in name or "screen" in name:
             return entry.get("description", "")
@@ -87,9 +87,9 @@ def build_video_data_prompt(
     shot: dict,
     *,
     math_topics: dict[str, dict],
-    visual_style_bible: dict,
+    visual_style_guide: dict,
 ) -> str:
-    style_desc = math_insert_set_description(visual_style_bible)
+    style_desc = math_insert_set_description(visual_style_guide)
     topic_lines: list[str] = []
     for topic_id in scene.get("topic_ids", []):
         topic = math_topics.get(topic_id)
@@ -308,7 +308,7 @@ def generate(
 ) -> dict:
     storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
     math_topics = load_math_topics(math_linkup_path)
-    visual_style_bible = storyboard.get("visual_style_bible", {})
+    visual_style_guide = storyboard.get("visual_style_guide", {})
 
     out_dir = output_dir(SUB_MODULE)
     manifest_path = out_dir / "manifest.json"
@@ -350,7 +350,7 @@ def generate(
             scene,
             shot,
             math_topics=math_topics,
-            visual_style_bible=visual_style_bible,
+            visual_style_guide=visual_style_guide,
         )
         pending.append((scene, shot, run_dir, final_video, video_data))
 
@@ -482,16 +482,16 @@ def main() -> None:
         help=f"Storyboard JSON with MATH INSERT shots (default: {DEFAULT_STORYBOARD.relative_to(PROJECT_ROOT)})",
     )
     parser.add_argument(
-        "--math-bible",
+        "--topic-specs",
         type=Path,
-        default=DEFAULT_MATH_BIBLE,
-        help=f"Math bible JSON (default: {DEFAULT_MATH_BIBLE.relative_to(PROJECT_ROOT)})",
+        default=DEFAULT_TOPIC_SPECS,
+        help=f"Math specs JSON (default: {DEFAULT_TOPIC_SPECS.relative_to(PROJECT_ROOT)})",
     )
     parser.add_argument(
         "--math-linkup",
         type=Path,
         default=None,
-        help="Legacy math linkup JSON (overrides --math-bible when set).",
+        help="Legacy math linkup JSON (overrides --topic-specs when set).",
     )
     parser.add_argument(
         "--scene",
@@ -543,7 +543,7 @@ def main() -> None:
     configure_output_root(args.output_root)
     print(f"Output root: {project_rel(get_output_root())}/")
 
-    math_path = args.math_linkup or args.math_bible
+    math_path = args.math_linkup or args.topic_specs
     if not args.storyboard.is_file():
         raise FileNotFoundError(f"Storyboard file not found: {args.storyboard}")
     if not math_path.is_file():

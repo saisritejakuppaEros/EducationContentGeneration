@@ -16,11 +16,12 @@ from diffusers.utils import load_image
 from PIL import Image
 
 from gemma_utils import fill_user_prompt, load_prompt_template
+from cast_reference_utils import profile_reference_path, source_photo_path
 from paths import DEFAULT_GEMMA_MODEL, DEFAULT_LLM_BACKEND, DEFAULT_PERSON_DIR, PROJECT_ROOT, PROMPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
-SUB_MODULE = "series_bible"
-DEFAULT_SERIES_BIBLE = output_dir(SUB_MODULE) / "series_bible.json"
+SUB_MODULE = "series_profile"
+DEFAULT_SERIES_PROFILE = output_dir(SUB_MODULE) / "series_profile.json"
 DEFAULT_PROMPT = PROMPTS_DIR / "reference_bank.md"
 DEFAULT_MODEL_HUB = Path("/workspace/parth/models/hub/models--black-forest-labs--FLUX.2-dev")
 
@@ -71,26 +72,53 @@ def load_flux_pipeline(model_path: Path, *, cpu_offload: bool) -> Flux2Pipeline:
     return pipe
 
 
+def resolve_cast_source(
+    *,
+    cast_key: str,
+    profile: dict,
+    source_dir: Path,
+    source_photos: dict[str, str],
+) -> Path:
+    path = profile_reference_path(profile, cast_key, "front_neutral")
+    if path:
+        return path
+    path = source_photo_path(cast_key, series_profile=profile, source_dir=source_dir)
+    if path:
+        return path
+    filename = source_photos.get(cast_key)
+    if filename:
+        legacy = source_dir / filename
+        if legacy.is_file():
+            return legacy
+    raise FileNotFoundError(f"No source photo for cast {cast_key}")
+
+
 def copy_source_as_front_neutral(
     *,
     cast_key: str,
-    source_dir: Path,
-    source_photos: dict[str, str],
+    source_path: Path,
     out_root: Path,
 ) -> Path:
-    filename = source_photos.get(cast_key)
-    if not filename:
-        raise ValueError(f"No source photo configured for cast {cast_key}")
-    src = source_dir / filename
-    if not src.is_file():
-        raise FileNotFoundError(f"Source photo not found: {src}")
-
     dest = out_root / cast_key / "front_neutral.png"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    if not dest.is_file():
-        shutil.copy2(src, dest)
+    if not dest.is_file() or dest.stat().st_mtime < source_path.stat().st_mtime:
+        shutil.copy2(source_path, dest)
         print(f"Copied source -> {dest.relative_to(PROJECT_ROOT)}")
     return dest
+
+
+def mirror_tags_from_leader(*, leader_key: str, cast_key: str, out_root: Path, tags: list[str]) -> None:
+    leader_dir = out_root / leader_key
+    cast_dir = out_root / cast_key
+    cast_dir.mkdir(parents=True, exist_ok=True)
+    for tag in tags:
+        src = leader_dir / f"{tag}.png"
+        if not src.is_file():
+            continue
+        dest = cast_dir / f"{tag}.png"
+        if not dest.is_file():
+            shutil.copy2(src, dest)
+            print(f"Mirrored {leader_key}/{tag} -> {cast_key}/{tag}")
 
 
 def generate_bank_image(
@@ -154,26 +182,29 @@ def build_edit_prompt(
     return data["edit_prompt"]
 
 
-def update_bible_paths(bible: dict, out_root: Path) -> dict:
-    for cast_key, info in bible.get("cast", {}).items():
+def update_profile_reference_paths(profile: dict, out_root: Path) -> dict:
+    for cast_key, info in profile.get("cast", {}).items():
+        cast_dir = out_root / cast_key
         photos = []
-        for entry in info.get("reference_photos") or []:
-            tag = entry.get("tag", "front_neutral")
-            rel = out_root.relative_to(PROJECT_ROOT) / cast_key / f"{tag}.png"
-            photos.append(
-                {
-                    "tag": tag,
-                    "path": str(rel).replace("\\", "/"),
-                    "source": entry.get("source", "generated"),
-                }
-            )
-        info["reference_photos"] = photos
-    return bible
+        if cast_dir.is_dir():
+            for png in sorted(cast_dir.glob("*.png")):
+                tag = png.stem
+                rel = png.relative_to(PROJECT_ROOT)
+                photos.append(
+                    {
+                        "tag": tag,
+                        "path": str(rel).replace("\\", "/"),
+                        "source": "generated" if tag != "front_neutral" else "master",
+                    }
+                )
+        if photos:
+            info["reference_photos"] = photos
+    return profile
 
 
 def build_bank(
     *,
-    series_bible_path: Path,
+    series_profile_path: Path,
     source_dir: Path,
     source_photos: dict[str, str],
     out_root: Path,
@@ -189,29 +220,46 @@ def build_bank(
     num_inference_steps: int,
     guidance_scale: float,
 ) -> dict:
-    bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
-    visual_grammar = bible.get("visual_grammar", {})
+    profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
+    visual_grammar = profile.get("visual_grammar", {})
     manifest = {"cast": {}, "generated": []}
 
     pipe = None
     if not copy_only:
         pipe = load_flux_pipeline(model_path, cpu_offload=cpu_offload)
 
-    for cast_key, info in bible.get("cast", {}).items():
-        if cast_key not in source_photos:
-            print(f"Skipping {cast_key} — no source photo mapping")
-            continue
+    cast_keys = list(profile.get("cast", {}).keys())
+    source_by_key: dict[str, Path] = {}
+    for cast_key in cast_keys:
+        try:
+            source_by_key[cast_key] = resolve_cast_source(
+                cast_key=cast_key,
+                profile=profile,
+                source_dir=source_dir,
+                source_photos=source_photos,
+            )
+        except FileNotFoundError as exc:
+            print(f"Skipping {cast_key} — {exc}")
 
+    leader_key = "Y" if "Y" in source_by_key else next(iter(source_by_key), None)
+    if not leader_key:
+        raise FileNotFoundError("No cast sources found in series profile or --source")
+
+    front_by_key: dict[str, Path] = {}
+    for cast_key, source_path in source_by_key.items():
         cast_dir = out_root / cast_key
         cast_dir.mkdir(parents=True, exist_ok=True)
         front_path = copy_source_as_front_neutral(
             cast_key=cast_key,
-            source_dir=source_dir,
-            source_photos=source_photos,
+            source_path=source_path,
             out_root=out_root,
         )
+        front_by_key[cast_key] = front_path
         manifest["cast"][cast_key] = {"front_neutral": str(front_path.relative_to(PROJECT_ROOT))}
 
+    def generate_tags_for(cast_key: str) -> None:
+        cast_dir = out_root / cast_key
+        front_path = front_by_key[cast_key]
         if copy_only:
             for tag in tags:
                 if tag == "front_neutral":
@@ -219,8 +267,11 @@ def build_bank(
                 dest = cast_dir / f"{tag}.png"
                 if not dest.is_file() and not skip_existing:
                     shutil.copy2(front_path, dest)
-            continue
+            return
+        if pipe is None:
+            return
 
+        info = profile.get("cast", {}).get(cast_key, {})
         source_image = load_image(str(front_path)).convert("RGB")
         description = info.get("description", cast_key)
 
@@ -256,14 +307,25 @@ def build_bank(
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-    updated = update_bible_paths(bible, out_root)
-    write_json(series_bible_path, updated)
+    generate_tags_for(leader_key)
+
+    leader_source = source_by_key[leader_key].resolve()
+    for cast_key in source_by_key:
+        if cast_key == leader_key:
+            continue
+        if source_by_key[cast_key].resolve() == leader_source:
+            mirror_tags_from_leader(leader_key=leader_key, cast_key=cast_key, out_root=out_root, tags=tags)
+        else:
+            generate_tags_for(cast_key)
+
+    updated = update_profile_reference_paths(profile, out_root)
+    write_json(series_profile_path, updated)
     return manifest
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build multi-angle reference photo bank for M/F/Y.")
-    parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
+    parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
     parser.add_argument("--source", type=Path, default=DEFAULT_PERSON_DIR)
     parser.add_argument("--output-dir", type=Path, default=output_dir(SUB_MODULE) / "reference_photos")
     parser.add_argument("--model-path", type=Path, default=DEFAULT_MODEL_HUB)
@@ -283,14 +345,14 @@ def main() -> None:
     configure_output_root(args.output_root)
     print(f"Output root: {project_rel(get_output_root())}/")
 
-    if not args.series_bible.is_file():
-        raise FileNotFoundError(f"series_bible not found: {args.series_bible}")
+    if not args.series_profile.is_file():
+        raise FileNotFoundError(f"series_profile not found: {args.series_profile}")
 
     tags = args.tags or list(TAG_EDIT_HINTS.keys())
     model_path = resolve_model_snapshot(args.model_path)
 
     manifest = build_bank(
-        series_bible_path=args.series_bible,
+        series_profile_path=args.series_profile,
         source_dir=args.source,
         source_photos=DEFAULT_SOURCE_PHOTOS,
         out_root=args.output_dir,

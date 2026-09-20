@@ -3,7 +3,7 @@
   "source": "output/flux_prompts/flux_prompts.json",
   "model_target": "ltx-2.3",
   "prompt_framework": "LTX AV — [VISUAL] [SPEECH] [SOUNDS]",
-  "visual_style_bible": {
+  "visual_style_guide": {
     "cast": {},
     "sets": [],
     "grade": "Teal shadows, warm amber highlights, light film grain."

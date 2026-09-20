@@ -32,18 +32,18 @@ def _playbook_excerpt(max_chars: int = 3500) -> str:
     return text[:max_chars].strip()
 
 
-def _series_bible_summary(series_bible_path: Path | None) -> str:
-    if not series_bible_path or not series_bible_path.is_file():
-        return "(Series bible not loaded.)"
-    bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
+def _series_profile_summary(series_profile_path: Path | None) -> str:
+    if not series_profile_path or not series_profile_path.is_file():
+        return "(Series profile not loaded.)"
+    profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
     lines = [
-        f"- Textbook tone: {bible.get('target_tone', '—')}",
-        f"- World premise: {bible.get('world', {}).get('premise', '—')}",
+        f"- Textbook tone: {profile.get('target_tone', '—')}",
+        f"- World premise: {profile.get('world', {}).get('premise', '—')}",
         "- Cast: same cartoon guide for M, F, Y (assets/cartoon/image.png)",
     ]
-    for key, info in (bible.get("cast") or {}).items():
+    for key, info in (profile.get("cast") or {}).items():
         lines.append(f"  - {key}: {info.get('role', 'Guide')} — {info.get('description', '')[:120]}")
-    vg = bible.get("visual_grammar") or {}
+    vg = profile.get("visual_grammar") or {}
     if vg.get("grade"):
         lines.append(f"- Visual grade: {vg['grade']}")
     return "\n".join(lines)
@@ -54,7 +54,7 @@ def build_director_brief(
     manifest: dict[str, Any],
     video: dict[str, Any],
     plan: dict[str, Any],
-    series_bible_path: Path | None = None,
+    series_profile_path: Path | None = None,
     include_playbook: bool = True,
 ) -> str:
     meta = manifest.get("metadata") or {}
@@ -84,7 +84,7 @@ def build_director_brief(
         f"- Next: {video.get('continues_to') or 'none — close with recap + teaser if applicable'}",
         "",
         "## Series / cast (director)",
-        _series_bible_summary(series_bible_path),
+        _series_profile_summary(series_profile_path),
         "",
     ]
 

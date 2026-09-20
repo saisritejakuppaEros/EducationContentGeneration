@@ -1,0 +1,6 @@
+{
+  "_comment": "Copy to MINIMAX_H3_I2V_PATCH path. Node ids must match YOUR exported ComfyUI API workflow.",
+  "prompt": { "node": "REPLACE_PROMPT_NODE", "input": "text" },
+  "image": { "node": "REPLACE_LOAD_IMAGE_NODE", "input": "image" },
+  "seed": { "node": "REPLACE_SEED_NODE", "input": "seed" }
+}

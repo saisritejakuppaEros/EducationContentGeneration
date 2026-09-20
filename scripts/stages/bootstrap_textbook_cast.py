@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Series bible + reference photos using the default cartoon cast image."""
+"""Series profile + reference photos using the default cartoon cast image."""
 import sys
 from pathlib import Path
 
@@ -20,7 +20,7 @@ from paths import (
 from pipeline_utils import write_json
 
 
-def build_series_bible(*, meta: dict, book_id: str, cartoon_rel: str) -> dict:
+def build_series_profile(*, meta: dict, book_id: str, cartoon_rel: str) -> dict:
     title = meta.get("textbook_title") or meta.get("lesson_title") or book_id
     subject = meta.get("subject") or "NCERT"
     tone = (
@@ -29,12 +29,13 @@ def build_series_bible(*, meta: dict, book_id: str, cartoon_rel: str) -> dict:
     )
     cast_entry = {
         "role": "Guide",
-        "description": "Same cartoon character for all roles — consistent silhouette and colors",
+        "description": "Same cartoon character for all roles — consistent silhouette, outfit, and face colors",
         "voice_profile": {
             "pace": "measured",
             "register": "friendly teacher",
             "accent": "neutral Indian English",
             "tic": "uses everyday analogies",
+            "use_narrator_voice": True,
         },
         "reference_photos": [
             {
@@ -47,6 +48,14 @@ def build_series_bible(*, meta: dict, book_id: str, cartoon_rel: str) -> dict:
     return {
         "textbook_title": title,
         "target_tone": tone,
+        "narration_voice": {
+            "engine": "edge_tts",
+            "voice_id": "en-IN-NeerjaNeural",
+            "language": "en",
+            "speed": 1.0,
+            "persona": "warm NCERT explainer narrator",
+        },
+        "character_voices": {"M": True, "F": True, "Y": True},
         "cast": {"M": dict(cast_entry), "F": dict(cast_entry), "Y": dict(cast_entry)},
         "world": {
             "premise": f"NCERT {subject} explainer — {title}. Viewer learns with the cartoon guide.",
@@ -54,7 +63,6 @@ def build_series_bible(*, meta: dict, book_id: str, cartoon_rel: str) -> dict:
                 {
                     "name": "Classroom / map studio",
                     "description": "Simple animated backdrop; maps and charts when needed",
-                    "reference_image": cartoon_rel,
                 }
             ],
         },
@@ -76,7 +84,7 @@ def copy_cast_references(cartoon: Path, ref_root: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Bootstrap series bible with cartoon cast.")
+    parser = argparse.ArgumentParser(description="Bootstrap series profile with cartoon cast.")
     parser.add_argument("--book-id", type=str, required=True)
     parser.add_argument("--cartoon-image", type=Path, default=DEFAULT_CARTOON_CAST_IMAGE)
     add_output_root_argument(parser)
@@ -92,17 +100,17 @@ def main() -> None:
     if manifest_path.is_file():
         meta = json.loads(manifest_path.read_text(encoding="utf-8")).get("metadata") or {}
 
-    series_dir = book_root / "series_bible"
+    series_dir = book_root / "series_profile"
     ref_root = series_dir / "reference_photos"
     copy_cast_references(args.cartoon_image, ref_root)
 
     rel_photo = project_rel(ref_root / "M" / "front_neutral.png")
-    bible = build_series_bible(meta=meta, book_id=args.book_id, cartoon_rel=rel_photo)
-    for key in bible["cast"]:
-        bible["cast"][key]["reference_photos"][0]["path"] = project_rel(ref_root / key / "front_neutral.png")
+    profile = build_series_profile(meta=meta, book_id=args.book_id, cartoon_rel=rel_photo)
+    for key in profile["cast"]:
+        profile["cast"][key]["reference_photos"][0]["path"] = project_rel(ref_root / key / "front_neutral.png")
 
-    json_path = series_dir / "series_bible.json"
-    write_json(json_path, bible)
+    json_path = series_dir / "series_profile.json"
+    write_json(json_path, profile)
     print(f"Wrote {json_path}")
     print(f"Cast image: {args.cartoon_image}")
     print(f"Book root: {project_rel(book_root)}/")

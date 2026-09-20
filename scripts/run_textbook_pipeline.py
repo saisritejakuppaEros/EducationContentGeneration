@@ -89,10 +89,42 @@ def step_plan(bid: str, *, use_llm: bool, force: bool) -> None:
     print(f"Heuristic plan: {len(plan['videos'])} video(s) → {plan_path}")
 
 
+def step_reference_bank(bid: str, *, skip_existing: bool, use_flux: bool) -> None:
+    profile_path = book_root(bid) / "series_profile" / "series_profile.json"
+    if not profile_path.is_file():
+        raise FileNotFoundError(profile_path)
+    ref_root = book_root(bid) / "series_profile" / "reference_photos"
+    manifest = ref_root / "manifest.json"
+    if skip_existing and manifest.is_file():
+        print(f"Skip reference bank — {manifest}")
+        return
+    args = [
+        "--series-profile",
+        str(profile_path),
+        "--output-dir",
+        str(ref_root),
+        "--output-root",
+        str(get_output_root()),
+        "--tag",
+        "close_up_neutral",
+        "--tag",
+        "wide_full_body_neutral_pose",
+        "--tag",
+        "three_quarter_left",
+        "--tag",
+        "three_quarter_right",
+    ]
+    if skip_existing:
+        args.append("--skip-existing")
+    if not use_flux:
+        args.append("--copy-only")
+    run_stage("build_reference_bank.py", args)
+
+
 def step_cast(bid: str, cartoon: Path, force: bool) -> None:
-    bible_path = book_root(bid) / "series_bible" / "series_bible.json"
-    if bible_path.is_file() and not force:
-        print(f"Skip cast bootstrap — {bible_path}")
+    profile_path = book_root(bid) / "series_profile" / "series_profile.json"
+    if profile_path.is_file() and not force:
+        print(f"Skip cast bootstrap — {profile_path}")
         return
     run_stage(
         "bootstrap_textbook_cast.py",
@@ -113,7 +145,7 @@ def step_scripts_for_video(
     plan: dict,
     *,
     manifest: dict,
-    series_bible: Path,
+    series_profile: Path,
     runtime_minutes: int,
     skip_existing: bool,
     max_tokens: int,
@@ -129,14 +161,14 @@ def step_scripts_for_video(
         manifest=manifest,
         video=video,
         plan=plan,
-        series_bible_path=series_bible,
+        series_profile_path=series_profile,
     )
     brief_path.write_text(brief, encoding="utf-8")
     chapter_path.write_text(brief, encoding="utf-8")
 
     out_flag = str(video_root)
     directing_json = video_root / "directing" / "directing_package.json"
-    bible_json = video_root / "math_bible" / "math_bible.json"
+    topic_specs_json = video_root / "topic_specs" / "topic_specs.json"
     screenplay_json = video_root / "screenplay" / "screenplay.json"
     storyboard_json = video_root / "storyboard" / "storyboard.json"
 
@@ -162,10 +194,10 @@ def step_scripts_for_video(
         if directing_json.is_file():
             export_directing_artifacts(directing_json, video_root / "directing")
 
-    if not (skip_existing and bible_json.is_file()):
-        print(f"\n--- [{vid}] topic bible ---")
+    if not (skip_existing and topic_specs_json.is_file()):
+        print(f"\n--- [{vid}] topic specs ---")
         run_stage(
-            "generate_topic_bible.py",
+            "generate_topic_specs.py",
             [
                 "--input",
                 str(brief_path),
@@ -188,8 +220,8 @@ def step_scripts_for_video(
                 "--skip-gate",
                 "--runtime-minutes",
                 str(video.get("runtime_minutes") or runtime_minutes),
-                "--series-bible",
-                str(series_bible),
+                "--series-profile",
+                str(series_profile),
                 "--output-root",
                 out_flag,
             ],
@@ -203,8 +235,8 @@ def step_scripts_for_video(
                 "--backend",
                 DEFAULT_LLM_BACKEND,
                 "--skip-gate",
-                "--series-bible",
-                str(series_bible),
+                "--series-profile",
+                str(series_profile),
                 "--output-root",
                 out_flag,
             ],
@@ -239,6 +271,12 @@ def main() -> None:
     parser.add_argument("--runtime-minutes", type=int, default=8)
     parser.add_argument("--cartoon-image", type=Path, default=DEFAULT_CARTOON_CAST_IMAGE)
     parser.add_argument("--video-id", type=str, default=None, help="Only process one planned video id.")
+    parser.add_argument(
+        "--reference-bank",
+        choices=("off", "copy", "flux"),
+        default="flux",
+        help="After cast bootstrap: build multi-angle reference photos (flux=FLUX edits, copy=duplicate front only).",
+    )
     parser.add_argument(
         "--through",
         choices=("extract", "plan", "cast", "scripts"),
@@ -278,11 +316,18 @@ def main() -> None:
         print(f"\nStopped after cast bootstrap.")
         return
 
+    if args.reference_bank != "off":
+        step_reference_bank(
+            bid,
+            skip_existing=args.skip_existing and not args.force,
+            use_flux=args.reference_bank == "flux",
+        )
+
     plan = json.loads((book_root(bid) / "video_plan.json").read_text(encoding="utf-8"))
     manifest = json.loads((book_root(bid) / "manifest.json").read_text(encoding="utf-8"))
-    series_bible = book_root(bid) / "series_bible" / "series_bible.json"
-    if not series_bible.is_file():
-        raise FileNotFoundError(f"Missing series bible: {series_bible}")
+    series_profile = book_root(bid) / "series_profile" / "series_profile.json"
+    if not series_profile.is_file():
+        raise FileNotFoundError(f"Missing series profile: {series_profile}")
 
     videos = plan.get("videos") or []
     if args.video_id:
@@ -297,7 +342,7 @@ def main() -> None:
             video,
             plan,
             manifest=manifest,
-            series_bible=series_bible,
+            series_profile=series_profile,
             runtime_minutes=args.runtime_minutes,
             skip_existing=args.skip_existing,
             max_tokens=args.max_tokens,

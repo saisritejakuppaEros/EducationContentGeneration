@@ -20,7 +20,7 @@ from qwen_utils import run_qwen_json
 
 SUB_MODULE = "cinematic_videos"
 DEFAULT_STORYBOARD = output_dir("storyboard") / "storyboard.json"
-DEFAULT_SERIES_BIBLE = output_dir("series_bible") / "series_bible.json"
+DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
 DEFAULT_PROMPT = PROMPTS_DIR / "cinematic_video.md"
 
 HUMAN_SHOT_TYPES = {"INT WIDE", "WIDE", "OTS", "TWO-SHOT", "REACTION", "Y-POV", "OTS Y→M", "OTS Y→F"}
@@ -130,7 +130,7 @@ def validate_scene_prompts(data: dict) -> None:
 def generate_scene_prompts(
     *,
     scene: dict,
-    series_bible: dict,
+    series_profile: dict,
     previous_motion: str,
     prompt_path: Path,
     backend: str,
@@ -141,7 +141,7 @@ def generate_scene_prompts(
     user_prompt = fill_user_prompt(
         user_template,
         scene_shots=json.dumps(scene, indent=2, ensure_ascii=False),
-        series_bible=json.dumps(series_bible, indent=2, ensure_ascii=False),
+        series_profile=json.dumps(series_profile, indent=2, ensure_ascii=False),
         previous_shot_motion=previous_motion or "None",
     )
 
@@ -207,7 +207,7 @@ def build_prompts_manifest_deterministic(
 def build_prompts_manifest(
     *,
     storyboard_path: Path,
-    series_bible_path: Path,
+    series_profile_path: Path,
     prompt_path: Path,
     scene_ids: list[str] | None,
     backend: str,
@@ -216,7 +216,7 @@ def build_prompts_manifest(
     include_math_inserts: bool = False,
 ) -> dict:
     storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
-    series_bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
+    series_profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
     scenes_out = []
     previous_motion = ""
 
@@ -226,7 +226,7 @@ def build_prompts_manifest(
         scene_type = scene.get("screenplay_type", "STORY")
         llm_scene = generate_scene_prompts(
             scene=scene,
-            series_bible=series_bible,
+            series_profile=series_profile,
             previous_motion=previous_motion,
             prompt_path=prompt_path,
             backend=backend,
@@ -279,15 +279,17 @@ def run_video_generation(
     prompts_path: Path,
     extra_args: list[str],
     *,
-    video_backend: str = "minimax",
+    video_backend: str = "ltx",
 ) -> int:
     import subprocess
     import sys
 
-    if video_backend == "minimax":
-        script = SCRIPTS_DIR / "legacy" / "generate_minimax_videos.py"
+    if video_backend == "minimax_h3":
+        script = SCRIPTS_DIR / "legacy" / "generate_minimax_h3_local_videos.py"
     elif video_backend == "ltx":
         script = SCRIPTS_DIR / "legacy" / "generate_ltx_videos.py"
+    elif video_backend == "minimax_api":
+        script = SCRIPTS_DIR / "legacy" / "generate_minimax_videos.py"
     else:
         raise ValueError(f"Unknown video backend: {video_backend}")
 
@@ -309,7 +311,7 @@ def run_video_generation(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate cinematic prompts and LTX videos from storyboard.")
     parser.add_argument("--storyboard", type=Path, default=DEFAULT_STORYBOARD)
-    parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
+    parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
     parser.add_argument("--scene", action="append", dest="scene_ids")
     parser.add_argument("--backend", choices=["gemma", "qwen"], default=DEFAULT_LLM_BACKEND)
@@ -330,9 +332,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--video-backend",
-        choices=("minimax", "ltx"),
-        default="minimax",
-        help="minimax = MiniMax-H3 cloud I2V (MINIMAX_API_KEY); ltx = local LTX 2.3 in gsplat_env.",
+        choices=("ltx", "minimax_h3", "minimax_api"),
+        default="minimax_h3",
+        help=(
+            "minimax_h3 = local MiniMax-H3 via ComfyUI (MINIMAX_H3_* env); "
+            "ltx = local LTX 2.3 in gsplat_env; minimax_api = cloud API (MINIMAX_API_KEY)."
+        ),
     )
     add_output_root_argument(parser)
     args, extra = parser.parse_known_args()
@@ -358,7 +363,7 @@ def main() -> None:
             model_path = args.model_path or DEFAULT_GEMMA_MODEL
             manifest = build_prompts_manifest(
                 storyboard_path=args.storyboard,
-                series_bible_path=args.series_bible if args.series_bible.is_file() else args.series_bible,
+                series_profile_path=args.series_profile if args.series_profile.is_file() else args.series_profile,
                 prompt_path=args.prompt,
                 scene_ids=args.scene_ids,
                 backend=args.backend,

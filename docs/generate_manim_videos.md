@@ -4,12 +4,12 @@ Generates Manim math-insert videos for **MATH INSERT** / **CONCEPT** shots using
 
 ## Purpose
 
-Stage 5b — Math Insert Agent. Visualizes only `core_visual_idea` from the math bible (no full derivations).
+Stage 5b — Math Insert Agent. Visualizes only `core_visual_idea` from the math specs (no full derivations).
 
 ## Inputs
 
 1. **Storyboard** — `output/storyboard/storyboard.json` (default)
-2. **Math bible** — `output/math_bible/math_bible.json` (default)
+2. **Math specs** — `output/topic_specs/math_specs.json` (default)
    - Legacy: `--math-linkup output/ps_math_linkup/ps_math_linkup.json`
 3. **manim-generator** — project venv; calls `ManimWorkflow` programmatically
 
@@ -29,6 +29,6 @@ export OPENAI_API_BASE=http://localhost:8000/v1
 
 python scripts/stages/generate_manim_videos.py \
   --storyboard output/storyboard/storyboard.json \
-  --math-bible output/math_bible/math_bible.json \
+  --topic-specs output/topic_specs/math_specs.json \
   --scene SC02 --skip-existing
 ```

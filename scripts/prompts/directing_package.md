@@ -40,7 +40,7 @@ Required JSON schema:
     "audio_role": "bed | punctuation | voice-only",
     "tone_dial": 0
   },
-  "style_bible": "paste STYLE BIBLE block as a single string",
+  "style_guide": "paste STYLE GUIDE block as a single string",
   "beat_sheet": [
     {
       "beat_number": 1,

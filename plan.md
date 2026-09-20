@@ -25,9 +25,9 @@ Implement **one step at a time**. Do not start GPU-heavy stages until all upstre
 
 ```
 Chapter Text
-  → [1] math_bible          (text)
+  → [1] topic_specs          (text)
   → [2] screenplay          (text)
-  → [3] series_bible        (text + reference photos)
+  → [3] series_profile        (text + reference photos)
   → [4] storyboard          (text + keyframe stills)
   → [5a] cinematic_videos   (WAN/LTX pixels)     ┐
   → [5b] manim_videos       (Manim pixels)        ├ parallel after stage 4
@@ -66,22 +66,22 @@ Each stage has a **gate**: a review pass before the next stage runs. Text gates 
 
 | Deliverable | Path |
 |-------------|------|
-| Script | `scripts/stages/generate_math_bible.py` |
-| Prompt | `scripts/prompts/math_bible.md` |
-| Sample schema | `scripts/samples/math_bible.json` |
-| Doc | `docs/generate_math_bible.md` |
-| Output | `output/math_bible/math_bible.json` |
+| Script | `scripts/stages/generate_math_specs.py` |
+| Prompt | `scripts/prompts/math_specs.md` |
+| Sample schema | `scripts/samples/math_specs.json` |
+| Doc | `docs/generate_math_specs.md` |
+| Output | `output/math_specs/math_specs.json` |
 
 **Input**
 
 ```json
 {
   "chapter_text": "raw chapter or ToC + subtopics",
-  "series_bible_math_history": "concepts taught in prior chapters (empty on chapter 1)"
+  "series_profile_math_history": "concepts taught in prior chapters (empty on chapter 1)"
 }
 ```
 
-**Output shape — `math_bible.json`**
+**Output shape — `math_specs.json`**
 
 ```json
 {
@@ -108,16 +108,16 @@ Each stage has a **gate**: a review pass before the next stage runs. Text gates 
 **Run**
 
 ```bash
-python scripts/stages/generate_math_bible.py \
+python scripts/stages/generate_math_specs.py \
   --input scripts/samples/input_docs.md \
-  --output-file output/math_bible/math_bible.json
+  --output-file output/math_specs/math_specs.json
 ```
 
 ---
 
 ## Step 2 — Screenwriter Agent
 
-**Goal:** turn `math_bible.json` into a real screenplay — scenes, action lines, dialogue, intentions.
+**Goal:** turn `math_specs.json` into a real screenplay — scenes, action lines, dialogue, intentions.
 
 | Deliverable | Path |
 |-------------|------|
@@ -131,8 +131,8 @@ python scripts/stages/generate_math_bible.py \
 
 ```json
 {
-  "math_bible": "output/math_bible/math_bible.json",
-  "series_bible": "output/series_bible/series_bible.json (empty on chapter 1)",
+  "topic_specs": "output/math_specs/math_specs.json",
+  "series_profile": "output/series_profile/series_profile.json (empty on chapter 1)",
   "chapter_runtime_target_minutes": 18
 }
 ```
@@ -163,7 +163,7 @@ python scripts/stages/generate_math_bible.py \
 }
 ```
 
-**Gate:** every `math_bible` topic covered; F never explains before Y has a reason to need it; dialogue WPM plausible for target duration; rising tension, not flat lessons.
+**Gate:** every `topic_specs` topic covered; F never explains before Y has a reason to need it; dialogue WPM plausible for target duration; rising tension, not flat lessons.
 
 **Replaces (old pipeline):** `generate_problem_statement_buildup.py` + narrative beats from `generate_image_video_generation.py`.
 
@@ -171,25 +171,25 @@ python scripts/stages/generate_math_bible.py \
 
 ```bash
 python scripts/stages/generate_screenplay.py \
-  --math-bible output/math_bible/math_bible.json \
+  --topic-specs output/math_specs/math_specs.json \
   --output-dir output/screenplay
 ```
 
 ---
 
-## Step 3 — Character & Series Bible Agent
+## Step 3 — Character & Series Profile Agent
 
 **Goal:** lock M/F/Y identity, voice, world, visual grammar, and a multi-angle reference photo bank.
 
 | Deliverable | Path |
 |-------------|------|
-| Script (text bible) | `scripts/stages/generate_series_bible.py` |
+| Script (series profile) | `scripts/stages/generate_series_profile.py` |
 | Script (photo bank) | `scripts/stages/build_reference_bank.py` |
-| Prompts | `scripts/prompts/series_bible.md`, `scripts/prompts/reference_bank.md` |
-| Sample schema | `scripts/samples/series_bible.json` |
-| Doc | `docs/generate_series_bible.md`, `docs/build_reference_bank.md` |
-| Output | `output/series_bible/series_bible.json` |
-| Reference photos | `output/series_bible/reference_photos/{M,F,Y}/` |
+| Prompts | `scripts/prompts/series_profile.md`, `scripts/prompts/reference_bank.md` |
+| Sample schema | `scripts/samples/series_profile.json` |
+| Doc | `docs/generate_series_profile.md`, `docs/build_reference_bank.md` |
+| Output | `output/series_profile/series_profile.json` |
+| Reference photos | `output/series_profile/reference_photos/{M,F,Y}/` |
 
 **Reference bank tags (minimum per character)**
 
@@ -204,7 +204,7 @@ python scripts/stages/generate_screenplay.py \
 
 **Build once, lock before chapter production.** Extend the bank only when a new angle is needed — never ad hoc mid-chapter.
 
-**Output shape — `series_bible.json`**
+**Output shape — `series_profile.json`**
 
 ```json
 {
@@ -214,7 +214,7 @@ python scripts/stages/generate_screenplay.py \
       "description": "...",
       "voice_profile": {},
       "reference_photos": [
-        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/M/front_neutral.png"}
+        {"tag": "front_neutral", "path": "output/series_profile/reference_photos/M/front_neutral.png"}
       ]
     },
     "F": {},
@@ -226,17 +226,17 @@ python scripts/stages/generate_screenplay.py \
 }
 ```
 
-**Gate:** manual review of reference bank (cheap — handful of images); text bible reviewed for cast/world consistency.
+**Gate:** manual review of reference bank (cheap — handful of images); series profile reviewed for cast/world consistency.
 
-**Replaces (old pipeline):** implicit cast from `person/` single photos — now asset-managed under `output/series_bible/`.
+**Replaces (old pipeline):** implicit cast from `person/` single photos — now asset-managed under `output/series_profile/`.
 
 **Run**
 
 ```bash
-python scripts/stages/generate_series_bible.py --output-dir output/series_bible
+python scripts/stages/generate_series_profile.py --output-dir output/series_profile
 python scripts/stages/build_reference_bank.py \
   --source person/ \
-  --output-dir output/series_bible/reference_photos
+  --output-dir output/series_profile/reference_photos
 ```
 
 ---
@@ -258,7 +258,7 @@ python scripts/stages/build_reference_bank.py \
 **Required shot fields (all mandatory)**
 
 - `type`, `lens_mm`, `subject_scale_pct`, `camera_move`
-- `characters_in_frame` + `reference_tags_used` (lookup from series bible bank)
+- `characters_in_frame` + `reference_tags_used` (lookup from series profile bank)
 - `environment_detail`, `blocking`, `dialogue` (single speaker)
 - `duration_seconds`, `keyframe_image`, `qc_status`
 
@@ -325,7 +325,7 @@ output_fixed = pipe(
 )
 ```
 
-New sets get their reference plate generated once (no character refs) and saved to `series_bible.world.sets[].reference_image` for reuse across chapters.
+New sets get their reference plate generated once (no character refs) and saved to `series_profile.world.sets[].reference_image` for reuse across chapters.
 
 **Gate:** Director contact-sheet review per scene; wide-shot coverage rule enforced.
 
@@ -336,7 +336,7 @@ New sets get their reference plate generated once (no character refs) and saved 
 ```bash
 python scripts/stages/generate_storyboard.py \
   --screenplay output/screenplay/screenplay.json \
-  --series-bible output/series_bible/series_bible.json \
+  --series-profile output/series_profile/series_profile.json \
   --output-dir output/storyboard
 
 python scripts/stages/generate_storyboard_keyframes.py \
@@ -386,7 +386,7 @@ python scripts/stages/generate_cinematic_videos.py --scene SC03 --skip-existing
 | Output | `output/manim_videos/<topic_id>.mp4` |
 | Source | `output/manim_videos/<topic_id>.py` |
 
-**Hard rule:** visualize `math_bible.topics[].core_visual_idea` only. Scope creep = Stage 1 problem, not Manim problem.
+**Hard rule:** visualize `topic_specs.topics[].core_visual_idea` only. Scope creep = Stage 1 problem, not Manim problem.
 
 **Generation loop:** Qwen writes code → render → Gemma 4 visual review + code review → fix until pass (cap N cycles).
 
@@ -395,7 +395,7 @@ python scripts/stages/generate_cinematic_videos.py --scene SC03 --skip-existing
 ```bash
 source .venv/bin/activate
 python scripts/stages/generate_manim_videos.py \
-  --math-bible output/math_bible/math_bible.json \
+  --topic-specs output/math_specs/math_specs.json \
   --topic 1.1
 ```
 
@@ -447,13 +447,13 @@ output/audio/
 **Assembly steps**
 
 1. Concatenate shots in `storyboard.json` order (5a + 5b).
-2. Apply shared LUT from `series_bible.visual_grammar.grade`.
+2. Apply shared LUT from `series_profile.visual_grammar.grade`.
 3. Match-cut Manim inserts via planned push-in/pull-back shots.
 4. Mux locked voice (6.2), sfx bed (6.3), score (6.3).
 5. Repeat mux per language (6.4 dub + subtitles).
 6. Write EDL for manual tweaks without re-generation.
 
-**Final gate:** end-to-end review against screenplay intent and `math_bible` topic coverage.
+**Final gate:** end-to-end review against screenplay intent and `topic_specs` topic coverage.
 
 **Run**
 
@@ -469,7 +469,7 @@ python scripts/stages/assemble_final_cut.py \
 
 | Task | Model |
 |------|-------|
-| Orchestration, gates, math, screenplay, bible, shot breakdown, Manim code, audio planning | Qwen 3.6 (vLLM) |
+| Orchestration, gates, math, screenplay, specs, shot breakdown, Manim code, audio planning | Qwen 3.6 (vLLM) |
 | Keyframe QC, Manim visual review, dubbing / localization | Gemma 4 |
 | Keyframe pixels | FLUX.2-dev via `Flux2Pipeline` (multi-reference + mask inpaint) |
 | Cinematic video | WAN 2.2-class / LTX (existing) |
@@ -486,12 +486,12 @@ python scripts/stages/assemble_final_cut.py \
 | Old script | New script | New output dir |
 |------------|------------|----------------|
 | `generate_problem_statement_buildup.py` | `generate_screenplay.py` | `output/screenplay/` |
-| `generate_ps_math_linkup.py` | `generate_math_bible.py` | `output/math_bible/` |
+| `generate_ps_math_linkup.py` | `generate_math_specs.py` | `output/topic_specs/` |
 | `generate_image_video_generation.py` | `generate_storyboard.py` | `output/storyboard/` |
 | `generate_flux_prompts.py` + `generate_flux_images.py` | `generate_storyboard_keyframes.py` | `output/storyboard/` |
 | `generate_ltx_prompts.py` + `generate_ltx_videos.py` | `generate_cinematic_videos.py` | `output/cinematic_videos/` |
 | `generate_manim_videos.py` | same (adapt inputs) | `output/manim_videos/` |
-| *(missing)* | `generate_series_bible.py` | `output/series_bible/` |
+| *(missing)* | `generate_series_profile.py` | `output/series_profile/` |
 | *(missing)* | `generate_audio.py` | `output/audio/` |
 | *(missing)* | `assemble_final_cut.py` | `output/final_cut/` |
 
@@ -504,9 +504,9 @@ Old scripts remain until each new step is verified. Remove only after the replac
 | Order | Step | Blocked by | GPU? |
 |-------|------|------------|------|
 | 0 | Bootstrap (`run_pipeline.py`) | — | No |
-| 1 | `generate_math_bible.py` | Step 0 | No |
+| 1 | `generate_math_specs.py` | Step 0 | No |
 | 2 | `generate_screenplay.py` | Step 1 gate | No |
-| 3 | `generate_series_bible.py` + `build_reference_bank.py` | Step 2 gate | Photos only |
+| 3 | `generate_series_profile.py` + `build_reference_bank.py` | Step 2 gate | Photos only |
 | 4 | `generate_storyboard.py` + `generate_storyboard_keyframes.py` | Step 3 gate | Yes (Flux) |
 | 5a | `generate_cinematic_videos.py` | Step 4 gate | Yes (LTX/WAN) |
 | 5b | `generate_manim_videos.py` (adapt) | Step 1 gate | Yes (Manim) |

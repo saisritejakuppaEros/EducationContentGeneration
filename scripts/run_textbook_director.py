@@ -3,7 +3,7 @@
 Run NCERT Explainer Director (LLM) per planned video unit.
 
 Uses chapter + subchapter context → directing package (story, beats, scenes, image prompts, BGM cues)
-→ topic bible → screenplay → storyboard.
+→ topic specs → screenplay → storyboard.
 """
 import _bootstrap  # noqa: F401
 
@@ -52,7 +52,7 @@ def produce_video_unit(
     manifest: dict,
     plan: dict,
     video: dict,
-    series_bible: Path,
+    series_profile: Path,
     skip_existing: bool,
     max_tokens: int,
     director_only: bool,
@@ -68,7 +68,7 @@ def produce_video_unit(
             manifest=manifest,
             video=video,
             plan=plan,
-            series_bible_path=series_bible,
+            series_profile_path=series_profile,
         ),
         encoding="utf-8",
     )
@@ -108,8 +108,8 @@ def produce_video_unit(
             [
                 "--directing-package",
                 str(directing_json),
-                "--series-bible",
-                str(series_bible),
+                "--series-profile",
+                str(series_profile),
                 "--runtime-seconds",
                 str(runtime_sec),
                 "--output-root",
@@ -120,14 +120,14 @@ def produce_video_unit(
     if director_only:
         return
 
-    bible_json = video_root / "math_bible" / "math_bible.json"
+    topic_specs_json = video_root / "topic_specs" / "topic_specs.json"
     screenplay_json = video_root / "screenplay" / "screenplay.json"
     storyboard_json = video_root / "storyboard" / "storyboard.json"
 
-    if not (skip_existing and bible_json.is_file()):
-        print(f"\n=== [{vid}] Concept bible (topics for screenplay) ===")
+    if not (skip_existing and topic_specs_json.is_file()):
+        print(f"\n=== [{vid}] Concept specs (topics for screenplay) ===")
         run_stage(
-            "generate_topic_bible.py",
+            "generate_topic_specs.py",
             [
                 "--input",
                 str(brief_path),
@@ -150,8 +150,8 @@ def produce_video_unit(
                 "--skip-gate",
                 "--runtime-minutes",
                 str(video.get("runtime_minutes") or 8),
-                "--series-bible",
-                str(series_bible),
+                "--series-profile",
+                str(series_profile),
                 "--output-root",
                 out_flag,
             ],
@@ -165,8 +165,8 @@ def produce_video_unit(
                 "--backend",
                 DEFAULT_LLM_BACKEND,
                 "--skip-gate",
-                "--series-bible",
-                str(series_bible),
+                "--series-profile",
+                str(series_profile),
                 "--output-root",
                 out_flag,
             ],
@@ -181,7 +181,7 @@ def produce_video_unit(
             "directing_package": project_rel(directing_json),
             "story_overview": project_rel(video_root / "directing" / "story_overview.md"),
             "vo_script": project_rel(video_root / "directing" / "vo_script.md"),
-            "math_bible": project_rel(bible_json),
+            "topic_specs": project_rel(topic_specs_json),
             "screenplay": project_rel(screenplay_json),
             "storyboard": project_rel(storyboard_json),
             "shot_decomposition": project_rel(video_root / "shots" / "shot_decomposition.json"),
@@ -209,9 +209,9 @@ def main() -> None:
     root = book_root(args.book_id)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     plan = json.loads((root / "video_plan.json").read_text(encoding="utf-8"))
-    series_bible = root / "series_bible" / "series_bible.json"
-    if not series_bible.is_file():
-        raise FileNotFoundError(f"Run cast bootstrap first: {series_bible}")
+    series_profile = root / "series_profile" / "series_profile.json"
+    if not series_profile.is_file():
+        raise FileNotFoundError(f"Run cast bootstrap first: {series_profile}")
 
     videos = plan.get("videos") or []
     if args.video_id:
@@ -229,7 +229,7 @@ def main() -> None:
             manifest=manifest,
             plan=plan,
             video=video,
-            series_bible=series_bible,
+            series_profile=series_profile,
             skip_existing=args.skip_existing,
             max_tokens=args.max_tokens,
             director_only=args.director_only,

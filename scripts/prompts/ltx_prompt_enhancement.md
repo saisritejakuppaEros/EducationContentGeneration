@@ -26,7 +26,7 @@ Classify each shot into exactly one `ltx_mode`:
 
 3. **skip** — `type` is MATH INSERT. These are rendered by Manim, not LTX. Set `use_talking_head_lora: false`, leave prompts null.
 
-## Voice profiles (from style bible)
+## Voice profiles (from style guide)
 
 When writing [SOUNDS] for speakers:
 - **M (Mathematician)**: Male, 50s. Calm, measured, declarative. Moderate volume, close to mic. Quiet authority — not theatrical.
@@ -36,7 +36,7 @@ When writing [SOUNDS] for speakers:
 ## Visual rules
 
 1. Integrate `wan_motion` into [VISUAL] as chronological action — LTX needs motion described, not a static still.
-2. Preserve cast consistency: when M, F, or Y appear, use full descriptions from the style bible.
+2. Preserve cast consistency: when M, F, or Y appear, use full descriptions from the style guide.
 3. Apply project grade: teal shadows, warm amber highlights, film grain, anamorphic flare off screens.
 4. For OTS shots: describe foreground shoulder blur and who is in focus.
 5. For INSERT/TITLE/EXTREME WIDE: cinematic mode — no talking-head LoRA even if humans appear small in frame.
@@ -75,9 +75,9 @@ Scene response schema:
 
 Write LTX 2.3 audio-video prompts for every shot in this scene.
 
-<visual_style_bible>
-{{visual_style_bible}}
-</visual_style_bible>
+<visual_style_guide>
+{{visual_style_guide}}
+</visual_style_guide>
 
 <tone_target>
 {{tone_target}}

@@ -1,6 +1,6 @@
 # Textbook pipeline (PDF → one video script per unit)
 
-Turn an NCERT / DIKSHA PDF into **one explainer script package per planned video** (directing package, concept bible, screenplay, storyboard). Image/video generation comes later (`--with-pixels` placeholder).
+Turn an NCERT / DIKSHA PDF into **one explainer script package per planned video** (directing package, concept specs, screenplay, storyboard). Image/video generation comes later (`--with-pixels` placeholder).
 
 Default cast: [`assets/cartoon/image.png`](../assets/cartoon/image.png) for **M / F / Y** (same character everywhere).
 
@@ -31,7 +31,7 @@ export OPENAI_API_BASE=http://localhost:8007/v1
 export OPENAI_API_KEY=sk-local
 export QWEN_MODEL=Qwen/Qwen3.5-27B
 
-# All 3 videos (director → topic bible → screenplay → storyboard)
+# All 3 videos (director → topic specs → screenplay → storyboard)
 python3 scripts/run_textbook_director.py \
   --book-id do_3129711180205834241569 \
   --skip-existing \
@@ -194,14 +194,14 @@ output/textbooks/<book_id>/
   extracted/chapters.json
   manifest.json              # metadata + chapters[] + sections[] (video units)
   video_plan.json            # one row per video + chapter_markdown
-  series_bible/
-    series_bible.json
+  series_profile/
+    series_profile.json
     reference_photos/M|F|Y/front_neutral.png   # copies of cartoon image
   videos/
     v01_rf1/
       input/chapter.md
       directing/directing_package.json
-      math_bible/math_bible.json     # concept bible (social science)
+      topic_specs/math_specs.json     # concept specs (social science)
       screenplay/screenplay.json
       storyboard/storyboard.json
 ```
@@ -213,7 +213,7 @@ output/textbooks/<book_id>/
 | Extract PDF | `scripts/stages/extract_textbook_pdf.py` |
 | Plan videos | `scripts/stages/plan_textbook_videos.py` |
 | Cartoon cast | `scripts/stages/bootstrap_textbook_cast.py` |
-| Concept bible | `scripts/stages/generate_topic_bible.py` |
+| Concept specs | `scripts/stages/generate_topic_specs.py` |
 | Orchestrator | `scripts/run_textbook_pipeline.py` |
 
 Per-chapter **pixel** pipeline reuses existing `run_pipeline.py` with `--output-root` pointing at each `videos/<id>/` (next phase).

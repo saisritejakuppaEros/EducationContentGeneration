@@ -41,6 +41,7 @@ STAGE_DEFAULT_ARGS: dict[str, list[str]] = {
         "--manim-model", os.environ.get("QWEN_MODEL", DEFAULT_QWEN_MODEL),
         "--review-model", os.environ.get("QWEN_MODEL", DEFAULT_QWEN_MODEL),
     ],
+    "5h": ["--skip-existing", "--generate-stubs"],
     "6": ["--synthesize", "--voice-only"],
     "6b": ["--directing-package"],
     "7": [],
@@ -75,19 +76,25 @@ def script_args_for_stage(
     output_root: Path | None,
     *,
     enable_manim: bool,
+    enable_html_inserts: bool,
 ) -> list[str]:
+    insert_via_ltx = not enable_manim and not enable_html_inserts
     if passthrough:
         args = list(passthrough)
     elif stage_id == "4b":
         args = list(STAGE_DEFAULT_ARGS.get(stage_id, []))
-        if not enable_manim:
+        if insert_via_ltx:
             args.append("--include-math-inserts")
     elif stage_id == "5a":
         args = list(STAGE_DEFAULT_ARGS.get(stage_id, []))
-        if not enable_manim:
+        if insert_via_ltx:
             args.append("--include-math-inserts")
-    elif stage_id == "7" and enable_manim:
-        args = ["--enable-manim"]
+    elif stage_id == "7":
+        args = []
+        if enable_manim:
+            args.append("--enable-manim")
+        if enable_html_inserts:
+            args.append("--enable-html-inserts")
     else:
         args = list(STAGE_DEFAULT_ARGS.get(stage_id, ["--backend", DEFAULT_LLM_BACKEND]))
     if output_root is not None:
@@ -101,13 +108,19 @@ def dry_run_report(
     output_root: Path,
     *,
     enable_manim: bool,
+    enable_html_inserts: bool,
     skip_reference_bank: bool,
 ) -> None:
     print("Chapter-to-Movie Pipeline — stage I/O")
     print(f"Output root: {project_rel(output_root)}/")
     print(f"LLM backend: {DEFAULT_LLM_BACKEND} (vLLM @ {DEFAULT_QWEN_API_BASE})")
     print(f"Model: {os.environ.get('QWEN_MODEL', DEFAULT_QWEN_MODEL)}")
-    print(f"Manim (stage 5b): {'enabled' if enable_manim else 'disabled — math inserts via cinematic LTX'}")
+    print(f"Manim (stage 5b): {'enabled' if enable_manim else 'disabled'}")
+    print(
+        f"HTML inserts (stage 5h): {'enabled' if enable_html_inserts else 'disabled — inserts use LTX unless Manim on'}"
+    )
+    if not enable_manim and not enable_html_inserts:
+        print("Insert shots: cinematic LTX / keyframes (--include-math-inserts on 4b/5a)")
     print(f"Reference bank (3b): {'skipped' if skip_reference_bank else 'enabled'}\n")
     for stage in STAGES:
         if stage.id == "0":
@@ -119,10 +132,14 @@ def dry_run_report(
         print(f"  gate:    {stage.gate}")
         if stage.id == "5b" and not enable_manim:
             print("  skipped: Manim disabled (use --enable-manim to run stage 5b)")
+        elif stage.id == "5h" and not enable_html_inserts:
+            print("  skipped: HTML inserts disabled (use --enable-html-inserts to run stage 5h)")
         elif stage.id == REFERENCE_BANK_STAGE_ID and skip_reference_bank:
             print("  skipped: custom avatars deferred (omit --skip-reference-bank to run)")
         else:
-            stage_defaults = script_args_for_stage(stage.id, [], None, enable_manim=enable_manim)
+            stage_defaults = script_args_for_stage(
+                stage.id, [], None, enable_manim=enable_manim, enable_html_inserts=enable_html_inserts
+            )
             if stage_defaults:
                 print(f"  defaults: {' '.join(stage_defaults)}")
         print()
@@ -160,6 +177,11 @@ def main() -> None:
         help="Run stage 5b (Manim math inserts). When off, MATH INSERT shots use cinematic LTX instead.",
     )
     parser.add_argument(
+        "--enable-html-inserts",
+        action="store_true",
+        help="Run stage 5h (HTML diagram inserts). Addon; does not remove Manim or LTX fallbacks.",
+    )
+    parser.add_argument(
         "--skip-reference-bank",
         action="store_true",
         help="Skip stage 3b (cast reference photos) until custom avatars are ready.",
@@ -188,6 +210,7 @@ def main() -> None:
         dry_run_report(
             output_root,
             enable_manim=args.enable_manim,
+            enable_html_inserts=args.enable_html_inserts,
             skip_reference_bank=skip_reference_bank,
         )
         return
@@ -200,14 +223,15 @@ def main() -> None:
     gate_map = {
         "dir": None,
         "1": None,
-        "2": "math_bible",
+        "2": "topic_specs",
         "3": "screenplay",
-        "3b": "series_bible",
-        "4": "reference_bank" if not skip_reference_bank else "series_bible",
+        "3b": "series_profile",
+        "4": "reference_bank" if not skip_reference_bank else "series_profile",
         "4b": "storyboard",
         "5a": "storyboard",
         "5c": "cinematic_videos",
-        "5b": "math_bible",
+        "5b": "topic_specs",
+        "5h": "storyboard",
         "6": "storyboard",
         "6b": "directing_package",
         "7": "audio",
@@ -233,6 +257,16 @@ def main() -> None:
             )
             continue
 
+        if stage.id == "5h" and not args.enable_html_inserts:
+            print(f"\n=== Stage {stage.id}: {stage.name} (skipped — HTML inserts addon off) ===")
+            update_state(
+                current_stage=stage.id,
+                status="skipped",
+                notes="HTML inserts disabled; use --enable-html-inserts or LTX/Manim",
+                enable_manim=args.enable_manim,
+            )
+            continue
+
         if stage.id == REFERENCE_BANK_STAGE_ID and skip_reference_bank:
             print(f"\n=== Stage {stage.id}: {stage.name} (skipped — avatars/reference bank deferred) ===")
             update_state(
@@ -248,7 +282,13 @@ def main() -> None:
         update_state(current_stage=stage.id, status="running", enable_manim=args.enable_manim)
         rc = run_script(
             stage.script,
-            script_args_for_stage(stage.id, args.passthrough, output_root, enable_manim=args.enable_manim),
+            script_args_for_stage(
+                stage.id,
+                args.passthrough,
+                output_root,
+                enable_manim=args.enable_manim,
+                enable_html_inserts=args.enable_html_inserts,
+            ),
         )
         if rc != 0:
             update_state(

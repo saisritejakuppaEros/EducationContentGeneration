@@ -8,9 +8,9 @@ Chapter → educational film pipeline. **Entry point:** `run_pipeline.py`.
 flowchart LR
   subgraph text["Text / LLM (Qwen via vLLM)"]
     dir["dir: directing_package"]
-    s1["1: math_bible"]
+    s1["1: math_specs"]
     s2["2: screenplay"]
-    s3["3: series_bible"]
+    s3["3: series_profile"]
     s3b["3b: reference_bank"]
     s4["4: storyboard"]
     s4p["4p: apply_pacing (optional)"]
@@ -20,6 +20,7 @@ flowchart LR
     s5a["5a: cinematic_videos"]
     s5c["5c: production_qc"]
     s5b["5b: manim_videos (optional)"]
+    s5h["5h: html_inserts (optional addon)"]
   end
   subgraph audio["Audio"]
     s6["6: dialogue TTS"]
@@ -27,10 +28,12 @@ flowchart LR
   end
   s7["7: final_cut"]
 
-  dir --> s1 --> s2 --> s3 --> s3b --> s4 --> s4p --> s4b --> s5a --> s5c
+  dir --> s1 --> s2 --> s3 --> s3b --> s4 --> s4p --> s4b -->   s5a --> s5c
   s5a --> s6
   s1 -.-> s5b
+  s4 -.-> s5h
   s5b -.-> s7
+  s5h -.-> s7
   s5a --> s7
   s6 --> s6b --> s7
   dir -.-> s6b
@@ -39,10 +42,10 @@ flowchart LR
 | Stage | Script | Primary output |
 |-------|--------|----------------|
 | **dir** | `stages/generate_directing_package.py` | `output/directing/directing_package.json` |
-| **1** | `stages/generate_math_bible.py` | `output/math_bible/math_bible.json` |
+| **1** | `stages/generate_math_specs.py` | `output/math_specs/math_specs.json` |
 | **2** | `stages/generate_screenplay.py` | `output/screenplay/screenplay.json` |
-| **3** | `stages/generate_series_bible.py` | `output/series_bible/series_bible.json` |
-| **3b** | `stages/build_reference_bank.py` | `output/series_bible/reference_photos/` |
+| **3** | `stages/generate_series_profile.py` | `output/series_profile/series_profile.json` |
+| **3b** | `stages/build_reference_bank.py` | `output/series_profile/reference_photos/` |
 | **4** | `stages/generate_storyboard.py` | `output/storyboard/storyboard.json` |
 | **ref** | `stages/analyze_reference_pacing.py` | `output/pipeline/reference_pacing_profile.json` |
 | **4p** | `stages/apply_pacing_profile.py` | Retimes `storyboard.json` from **ref** profile |
@@ -50,6 +53,7 @@ flowchart LR
 | **5a** | `stages/generate_cinematic_videos.py` | `output/cinematic_videos/manifest.json` |
 | **5c** | `stages/validate_production_assets.py` | `output/pipeline/qc_report.json` + `contact_sheet.html` |
 | **5b** | `stages/generate_manim_videos.py` | `output/manim_videos/manifest.json` |
+| **5h** | `stages/render_html_inserts.py` | `output/html_inserts/manifest.json` (optional; see [../docs/html_inserts_addon.md](../docs/html_inserts_addon.md)) |
 | **6** | `stages/generate_audio.py` | `output/audio/audio_plan.json` |
 | **6b** | `stages/generate_background_audio.py` | `output/background_audio/manifest.json` |
 | **7** | `stages/assemble_final_cut.py` | `output/final_cut/` |
@@ -87,7 +91,7 @@ scripts/
   prompts/                 # LLM prompt templates (# System / # User)
   samples/                 # Example JSON + default chapter input
   knowledge/               # Director skill + research context (not executed)
-  legacy/                  # Pre–math-bible/screenplay pipeline (deprecated)
+  legacy/                  # Pre–math-specs/screenplay pipeline (deprecated)
   manim-generator/         # Submodule used by stage 5b
 ```
 

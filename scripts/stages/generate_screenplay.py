@@ -15,12 +15,12 @@ from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "screenplay"
-DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
-DEFAULT_SERIES_BIBLE = output_dir("series_bible") / "series_bible.json"
+DEFAULT_TOPIC_SPECS = output_dir("topic_specs") / "topic_specs.json"
+DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
 DEFAULT_REFERENCE = SAMPLES_DIR / "screenplay.json"
 DEFAULT_PROMPT = PROMPTS_DIR / "screenplay.md"
 DEFAULT_RUNTIME_MINUTES = 18
-EMPTY_BIBLE = "{}"
+EMPTY_TOPIC_SPECS = "{}"
 
 
 def validate_screenplay(data: dict) -> None:
@@ -50,15 +50,15 @@ def validate_screenplay(data: dict) -> None:
             raise ValueError(f"Scene {scene['scene_id']} dialogue must be a list")
 
 
-def gate_check_screenplay(screenplay: dict, math_bible: dict) -> tuple[bool, str]:
-    topic_ids = {t["id"] for t in math_bible.get("topics", [])}
+def gate_check_screenplay(screenplay: dict, topic_specs: dict) -> tuple[bool, str]:
+    topic_ids = {t["id"] for t in topic_specs.get("topics", [])}
     covered = set()
     for scene in screenplay.get("scenes", []):
         covered.update(scene.get("topic_ids") or [])
 
     missing = topic_ids - covered
     if missing:
-        return False, f"math_bible topics not covered in screenplay: {sorted(missing)}"
+        return False, f"topic_specs topics not covered in screenplay: {sorted(missing)}"
 
     for scene in screenplay.get("scenes", []):
         words = sum(len(d.get("line", "").split()) for d in scene.get("dialogue", []))
@@ -92,8 +92,8 @@ def render_screenplay_md(screenplay: dict) -> str:
 
 def generate(
     *,
-    math_bible_path: Path,
-    series_bible_path: Path,
+    topic_specs_path: Path,
+    series_profile_path: Path,
     reference_path: Path,
     prompt_path: Path,
     runtime_minutes: int,
@@ -104,18 +104,18 @@ def generate(
     enable_thinking: bool,
     skip_gate: bool,
 ) -> dict:
-    math_bible = json.loads(math_bible_path.read_text(encoding="utf-8"))
-    series_bible = (
-        series_bible_path.read_text(encoding="utf-8")
-        if series_bible_path.is_file()
-        else EMPTY_BIBLE
+    topic_specs = json.loads(topic_specs_path.read_text(encoding="utf-8"))
+    series_profile = (
+        series_profile_path.read_text(encoding="utf-8")
+        if series_profile_path.is_file()
+        else EMPTY_TOPIC_SPECS
     )
     reference_output = reference_path.read_text(encoding="utf-8")
     system_prompt, user_template = load_prompt_template(prompt_path)
     user_prompt = fill_user_prompt(
         user_template,
-        math_bible=json.dumps(math_bible, indent=2, ensure_ascii=False),
-        series_bible=series_bible,
+        topic_specs=json.dumps(topic_specs, indent=2, ensure_ascii=False),
+        series_profile=series_profile,
         chapter_runtime_target_minutes=str(runtime_minutes),
         reference_output=reference_output,
     )
@@ -136,16 +136,16 @@ def generate(
         write_gate(SUB_MODULE, passed=True, notes="Gate skipped via --skip-gate")
         return result
 
-    passed, notes = gate_check_screenplay(result, math_bible)
+    passed, notes = gate_check_screenplay(result, topic_specs)
     write_gate(SUB_MODULE, passed=passed, notes=notes)
     print(f"Gate {'PASSED' if passed else 'FAILED'}: {notes}")
     return result
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate screenplay.json from math_bible.")
-    parser.add_argument("--math-bible", type=Path, default=DEFAULT_MATH_BIBLE)
-    parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
+    parser = argparse.ArgumentParser(description="Generate screenplay.json from topic_specs.")
+    parser.add_argument("--topic-specs", type=Path, default=DEFAULT_TOPIC_SPECS)
+    parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
     parser.add_argument("--runtime-minutes", type=int, default=DEFAULT_RUNTIME_MINUTES)
@@ -163,15 +163,15 @@ def main() -> None:
     configure_output_root(args.output_root)
     print(f"Output root: {project_rel(get_output_root())}/")
 
-    if not args.math_bible.is_file():
-        raise FileNotFoundError(f"math_bible not found: {args.math_bible}")
+    if not args.topic_specs.is_file():
+        raise FileNotFoundError(f"topic_specs not found: {args.topic_specs}")
 
     model_path = args.model_path or DEFAULT_GEMMA_MODEL
     out_dir = output_dir(SUB_MODULE)
 
     result = generate(
-        math_bible_path=args.math_bible,
-        series_bible_path=args.series_bible,
+        topic_specs_path=args.topic_specs,
+        series_profile_path=args.series_profile,
         reference_path=args.reference,
         prompt_path=args.prompt,
         runtime_minutes=args.runtime_minutes,

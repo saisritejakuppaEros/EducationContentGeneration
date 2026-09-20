@@ -122,7 +122,7 @@ flowchart TB
 **Entry points:**
 
 - `scripts/run_textbook_pipeline.py` — book-level: extract → plan → (optional) series bootstrap → scripts
-- `scripts/run_textbook_director.py` — per-video LLM: directing package → shot decomposition → bible → screenplay → storyboard
+- `scripts/run_textbook_director.py` — per-video LLM: directing package → shot decomposition → topic specs → screenplay → storyboard
 - `scripts/run_textbook_pixels.py` — GPU: Flux keyframes → LTX cinematic clips (optional Manim math inserts)
 - `scripts/run_pipeline.py` — shared chapter-to-movie stages (QC, audio, mux)
 - `run.sh` — operational recipe (vLLM wrapper, BGM, pixels, stages 5c–7)
@@ -133,13 +133,13 @@ flowchart TB
 |-------|-------------|
 | Ingest | `manifest.json`, `extracted/chapters.json` |
 | Plan | `video_plan.json` |
-| Style / identity (optional) | `series_bible/series_bible.json` — palette, tone, prompt anchors when you want a stable look |
+| Style / identity (optional) | `series_profile/series_profile.json` — palette, tone, prompt anchors when you want a stable look |
 | Director | `directing/directing_package.json`, `shots/shot_decomposition.json` |
-| Script | `math_bible/`, `screenplay/`, `storyboard/` |
+| Script | `topic_specs/`, `screenplay/`, `storyboard/` |
 | Pixels | `shots/keyframes/`, `cinematic_videos/` |
 | Audio / finish | `background_audio/`, `audio/`, `final_cut/*.mp4` |
 
-**Shared stage model** (`scripts/lib/pipeline_utils.py`): `dir` → `1` math bible → `2` screenplay → `3` series bible → `4` storyboard → `5a` cinematic → `5b` Manim → `6`/`6b` audio → `7` final cut.
+**Shared stage model** (`scripts/lib/pipeline_utils.py`): `dir` → `1` math specs → `2` screenplay → `3` series profile → `4` storyboard → `5a` cinematic → `5b` Manim → `6`/`6b` audio → `7` final cut.
 
 **Strengths (keep)**
 
@@ -215,12 +215,12 @@ flowchart TB
 | 4 | Tooling | ROICtrl / StoryDiffusion + I2V (SVD, HunyuanVideo_I2V, …) | Per-shot media |
 | 5 | Assembly | `concatenate_videoclips` | `final_video.mp4` |
 
-**Inputs:** `dataset/<movie>/script_synopsis.json` + optional **identity bank** (photos/audio per named subject) — maps to our optional **reference bank** + series bible when you need locked subjects; MovieAgent expects **per-subject folders** and relationship-aware CoT.
+**Inputs:** `dataset/<movie>/script_synopsis.json` + optional **identity bank** (photos/audio per named subject) — maps to our optional **reference bank** + series profile when you need locked subjects; MovieAgent expects **per-subject folders** and relationship-aware CoT.
 
 | Topic | MovieAgent | Us |
 |-------|------------|-----|
 | Planning depth | **Explicit CoT per sub-script / scene / shot** | Director package + shot decomposition (less hierarchical) |
-| Subject / look consistency | ROICtrl / StoryDiffusion + photo bank | Flux/LTX prompts + optional refs + series tone bible |
+| Subject / look consistency | ROICtrl / StoryDiffusion + photo bank | Flux/LTX prompts + optional refs + series tone profile |
 | Subtitles / dialogue | Per-shot subtitle maps in shot JSON | VO in `narration_manifest.json` |
 | Long-form concat | ✅ native | ✅ `assemble_final_cut.py` |
 | Syllabus | ❌ | ✅ |
@@ -349,7 +349,7 @@ topic → beat map (beats.json)     [GATE 1: approve beats]
 | `director_brief.md` | `story_topic` params | Script synopsis | Input narrative | Topic + chapter one-liner | Manuscript ingest |
 | `directing_package.json` | Outline + pages (story) | Step 1 sub-script JSON | Director storyboard | **`beats.json`** (export adapter) | Beat / script tasks |
 | `shot_decomposition.json` | Per-page assets | Step 3 shot JSON | Clip segments | 2 shots per beat in beats | Shot tasks |
-| `series_bible.json` | `main_role` / setting | Character bank dirs | Character profiles | C-roll photo / theme presets | XiaTang library |
+| `series_profile.json` | `main_role` / setting | Character bank dirs | Character profiles | C-roll photo / theme presets | XiaTang library |
 | Flux / LTX outputs | `image/` pages | Per-shot `.jpg` → I2V | Wan clips | Collage posters → Atlas i2v | Video nodes |
 | Final mux | `video_compose` | `Final()` concat | Post-production agent | `assemble.py` (ffmpeg) | Episode export |
 
@@ -375,7 +375,7 @@ topic → beat map (beats.json)     [GATE 1: approve beats]
 1. **MovieAgent CoT layer** — After `directing_package.json`, run a **MovieAgent-shaped** planning pass (Qwen, local): emit `Step_*`-style JSON (sub-scripts → scenes → shots) with **per-shot motion, framing, and subject list**; feed that to LTX instead of flat scene tables.
 2. **AniMaker selection** — For each shot directory under `cinematic_videos/`, generate **N LTX variants**, score with lightweight checks (motion magnitude, character bbox stability, VO duration fit), keep best.
 3. **MM-StoryAgent orchestration** — Refactor modality stages toward **`register_tool` + YAML**; run speech/music/SFX in parallel where safe; use **QA outline story writer** pattern to turn dry chapter text into **story setting** before CoT shot breakdown (Education rubric aligns with NCERT).
-4. **Manim demotion** — `--include-math-inserts` only when `math_bible` marks a beat as **diagram-required**; default path = character + environment I2V.
+4. **Manim demotion** — `--include-math-inserts` only when `topic_specs` marks a beat as **diagram-required**; default path = character + environment I2V.
 5. **DramaClaw / OpenMontage** — Optional: review UI, cloud I2V fallback, documentary montage units in `video_plan.json`.
 6. **Vox Director** — Optional **short-form lane**: export first 30–60 s of beats from directing package → `beats.json` → run `scripts/vox-director/scripts/*` when Atlas is available; do **not** substitute for long-unit LTX until **shot-chain continuity** is solid on the main path.
 
@@ -436,7 +436,7 @@ Suggested layout: keep everything under `scripts/knowledge/` until volume grows,
 |--------|----------------|-----|
 | **`director_skill.md`** | `context.md` formula H+S+E+T+P+X | Keeps syllabus-accurate **explainer** spine for full-length units. |
 | **`director_skill.md`** | Add **`production_mode`** enum: `explainer` \| `continuous_animation` \| `collage_hook` | Routes LLM + pixel stages without forking the pipeline. |
-| **`visual_continuity.md`** (new) | `series_bible.json`, optional stage `3b`, prior keyframes | Rules for **same world** across clips: palette, era, camera grammar, motion style; reference photos only when a shot names a specific subject. |
+| **`visual_continuity.md`** (new) | `series_profile.json`, optional stage `3b`, prior keyframes | Rules for **same world** across clips: palette, era, camera grammar, motion style; reference photos only when a shot names a specific subject. |
 | **`production_qc.md`** (new) | `validate_production_assets.py`, stage gates in `pipeline_utils.py` | One checklist agents and humans share. |
 
 **Papers / priors already reflected:** explainer-channel decomposition (internal playbook), not Anim-Director arXiv — those go in the rows below.
@@ -553,7 +553,7 @@ flowchart TD
 | Syllabus + 9 min explainer formula | `director_skill.md` + `context.md` | Us |
 | Story warmth / education QA | `story_writer_agents.md` | MM-StoryAgent |
 | Script→scene→shot structure | `director_cot_cinematography.md` | MovieAgent paper + code |
-| Visual continuity across clips | `visual_continuity.md` | AniMaker + MovieAgent + optional bible/refs |
+| Visual continuity across clips | `visual_continuity.md` | AniMaker + MovieAgent + optional profile/refs |
 | Multi-clip LTX quality | `clip_photography_reviewer.md` | AniMaker |
 | VO + music + sync | `audio_director.md` | Us + Vox + OpenMontage |
 | Parallel modality jobs | `modality_orchestrator.md` | MM-StoryAgent |

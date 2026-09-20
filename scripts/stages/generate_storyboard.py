@@ -16,8 +16,8 @@ from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "storyboard"
 DEFAULT_SCREENPLAY = output_dir("screenplay") / "screenplay.json"
-DEFAULT_SERIES_BIBLE = output_dir("series_bible") / "series_bible.json"
-DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
+DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
+DEFAULT_TOPIC_SPECS = output_dir("topic_specs") / "topic_specs.json"
 DEFAULT_REFERENCE = SAMPLES_DIR / "storyboard.json"
 DEFAULT_PROMPT = PROMPTS_DIR / "storyboard.md"
 
@@ -76,13 +76,13 @@ def gate_check_wide_coverage(storyboard: dict) -> tuple[bool, str]:
     return True, "Wide coverage rule satisfied"
 
 
-def build_visual_style_bible(series_bible: dict) -> dict:
+def build_visual_style_guide(series_profile: dict) -> dict:
     return {
-        "cast": series_bible.get("cast", {}),
-        "sets": series_bible.get("world", {}).get("sets", []),
-        "camera_grammar": series_bible.get("visual_grammar", {}).get("camera_rules", []),
-        "grade": series_bible.get("visual_grammar", {}).get("grade", ""),
-        "golden_rule": series_bible.get("visual_grammar", {}).get(
+        "cast": series_profile.get("cast", {}),
+        "sets": series_profile.get("world", {}).get("sets", []),
+        "camera_grammar": series_profile.get("visual_grammar", {}).get("camera_rules", []),
+        "grade": series_profile.get("visual_grammar", {}).get("grade", ""),
+        "golden_rule": series_profile.get("visual_grammar", {}).get(
             "screen_direction_rules", "One speaking character per shot"
         ),
     }
@@ -91,7 +91,7 @@ def build_visual_style_bible(series_bible: dict) -> dict:
 def generate_scene_shots(
     *,
     scene: dict,
-    series_bible: dict,
+    series_profile: dict,
     previous_last_shot: str,
     next_scene_first_beat: str,
     reference_path: Path,
@@ -107,7 +107,7 @@ def generate_scene_shots(
     user_prompt = fill_user_prompt(
         user_template,
         scene_json=json.dumps(scene, indent=2, ensure_ascii=False),
-        series_bible=json.dumps(series_bible, indent=2, ensure_ascii=False),
+        series_profile=json.dumps(series_profile, indent=2, ensure_ascii=False),
         previous_last_shot=previous_last_shot or "None — first scene",
         next_scene_first_beat=next_scene_first_beat or "None — last scene",
         reference_output=reference_output,
@@ -141,8 +141,8 @@ def attach_keyframe_paths(scene_payload: dict, out_dir: Path) -> dict:
 def generate(
     *,
     screenplay_path: Path,
-    series_bible_path: Path,
-    math_bible_path: Path,
+    series_profile_path: Path,
+    topic_specs_path: Path,
     reference_path: Path,
     prompt_path: Path,
     scene_ids: list[str] | None,
@@ -154,8 +154,8 @@ def generate(
     skip_gate: bool,
 ) -> dict:
     screenplay = json.loads(screenplay_path.read_text(encoding="utf-8"))
-    series_bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
-    math_bible = json.loads(math_bible_path.read_text(encoding="utf-8")) if math_bible_path.is_file() else {}
+    series_profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
+    topic_specs = json.loads(topic_specs_path.read_text(encoding="utf-8")) if topic_specs_path.is_file() else {}
 
     scenes_in = screenplay.get("scenes", [])
     if scene_ids:
@@ -171,7 +171,7 @@ def generate(
 
         scene_payload = generate_scene_shots(
             scene=scene,
-            series_bible=series_bible,
+            series_profile=series_profile,
             previous_last_shot=previous_last_shot,
             next_scene_first_beat=next_beat,
             reference_path=reference_path,
@@ -212,10 +212,10 @@ def generate(
     seconds = int(total_seconds % 60)
 
     storyboard = {
-        "chapter": screenplay.get("chapter") or math_bible.get("chapter", ""),
-        "tone_target": series_bible.get("target_tone", ""),
+        "chapter": screenplay.get("chapter") or topic_specs.get("chapter", ""),
+        "tone_target": series_profile.get("target_tone", ""),
         "total_runtime_target": f"{minutes}:{seconds:02d}",
-        "visual_style_bible": build_visual_style_bible(series_bible),
+        "visual_style_guide": build_visual_style_guide(series_profile),
         "scenes": storyboard_scenes,
     }
 
@@ -238,8 +238,8 @@ def generate(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate storyboard.json from screenplay.")
     parser.add_argument("--screenplay", type=Path, default=DEFAULT_SCREENPLAY)
-    parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
-    parser.add_argument("--math-bible", type=Path, default=DEFAULT_MATH_BIBLE)
+    parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
+    parser.add_argument("--topic-specs", type=Path, default=DEFAULT_TOPIC_SPECS)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
     parser.add_argument("--scene", action="append", dest="scene_ids")
@@ -276,7 +276,7 @@ def main() -> None:
         print(f"Fixed dialogue splits in {out_path}")
         return
 
-    for path in (args.screenplay, args.series_bible):
+    for path in (args.screenplay, args.series_profile):
         if not path.is_file():
             raise FileNotFoundError(f"Required input not found: {path}")
 
@@ -285,8 +285,8 @@ def main() -> None:
 
     result = generate(
         screenplay_path=args.screenplay,
-        series_bible_path=args.series_bible,
-        math_bible_path=args.math_bible,
+        series_profile_path=args.series_profile,
+        topic_specs_path=args.topic_specs,
         reference_path=args.reference,
         prompt_path=args.prompt,
         scene_ids=args.scene_ids,

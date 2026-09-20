@@ -6,7 +6,7 @@ Given a problem-statement buildup JSON (narrative framework) and a math linkup J
 
 Rules:
 1. Use story_title, chapter names, subtitles, and topic ids from the inputs. Adapt all visuals/dialogue to THAT story — do not copy the reference story.
-2. Lock a visual_style_bible before scenes: cast (M/F/Y), sets, camera_grammar, grade, golden_rule. Keep Interstellar-like tone unless the story demands otherwise.
+2. Lock a visual_style_guide before scenes: cast (M/F/Y), sets, camera_grammar, grade, golden_rule. Keep Interstellar-like tone unless the story demands otherwise.
 3. Total runtime target ~20:00. Scenes stay ≤60s each. Alternate WAN dialogue scenes with Manim MATH INSERT scenes.
 4. Cover EVERY topic id from ps_math_linkup with at least one scene. Group related topics into single Manim scenes where natural (like 1.1+1.2).
 5. Structure the film:
@@ -25,7 +25,7 @@ Output JSON schema (follow exactly):
   "story_title": "string — from input",
   "tone_target": "string — visual tone reference",
   "total_runtime_target": "20:00",
-  "visual_style_bible": {
+  "visual_style_guide": {
     "cast": {
       "M": {"role": "Mathematician", "description": "string"},
       "F": {"role": "Friend", "description": "string"},

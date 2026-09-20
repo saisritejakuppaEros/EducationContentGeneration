@@ -13,14 +13,15 @@ import wave
 from pathlib import Path
 
 from gemma_utils import fill_user_prompt, load_prompt_template
+from voice_synthesis import resolve_voice_for_line, synthesize_to_file
 from paths import DEFAULT_LLM_BACKEND, PROJECT_ROOT, PROMPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_json
 
 SUB_MODULE = "audio"
 DEFAULT_SCREENPLAY = output_dir("screenplay") / "screenplay.json"
-DEFAULT_SERIES_BIBLE = output_dir("series_bible") / "series_bible.json"
+DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
 DEFAULT_STORYBOARD = output_dir("storyboard") / "storyboard.json"
-DEFAULT_MATH_BIBLE = output_dir("math_bible") / "math_bible.json"
+DEFAULT_TOPIC_SPECS = output_dir("topic_specs") / "topic_specs.json"
 DEFAULT_DUB_PROMPT = PROMPTS_DIR / "audio_dubbing.md"
 
 DEFAULT_LANGUAGES = ["en", "hi", "ta"]
@@ -28,9 +29,9 @@ LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "ta": "Tamil"}
 DEFAULT_WPM = 150
 
 
-def words_per_minute_for_character(series_bible: dict, character: str) -> float:
+def words_per_minute_for_character(series_profile: dict, character: str) -> float:
     pace = (
-        series_bible.get("cast", {})
+        series_profile.get("cast", {})
         .get(character, {})
         .get("voice_profile", {})
         .get("pace", "normal")
@@ -79,8 +80,8 @@ def build_math_narration(topic: dict) -> str:
     return " ".join(parts)
 
 
-def collect_math_narration_lines(storyboard: dict, math_bible: dict) -> list[dict]:
-    topics = {t["id"]: t for t in math_bible.get("topics", [])}
+def collect_math_narration_lines(storyboard: dict, topic_specs: dict) -> list[dict]:
+    topics = {t["id"]: t for t in topic_specs.get("topics", [])}
     lines: list[dict] = []
     seen: set[tuple[str, int]] = set()
 
@@ -118,14 +119,14 @@ def collect_math_narration_lines(storyboard: dict, math_bible: dict) -> list[dic
     return lines
 
 
-def collect_dialogue_lines(screenplay: dict, series_bible: dict) -> list[dict]:
+def collect_dialogue_lines(screenplay: dict, series_profile: dict) -> list[dict]:
     lines: list[dict] = []
     for scene in screenplay.get("scenes", []):
         scene_id = scene["scene_id"]
         for entry in scene.get("dialogue", []):
             character = entry.get("character", "Y")
             line = entry.get("line", "")
-            wpm = words_per_minute_for_character(series_bible, character)
+            wpm = words_per_minute_for_character(series_profile, character)
             duration = estimate_line_duration(line, wpm)
             lines.append(
                 {
@@ -172,42 +173,6 @@ def write_silent_wav(path: Path, duration_seconds: float, sample_rate: int = 240
         wav.writeframes(b"\x00\x00" * num_frames)
 
 
-def synthesize_with_edge_tts(text: str, output_path: Path, voice: str) -> bool:
-    try:
-        import asyncio
-        import edge_tts
-    except ImportError:
-        return False
-
-    async def _run() -> None:
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(str(output_path))
-
-    try:
-        asyncio.run(_run())
-        return output_path.is_file()
-    except Exception:
-        return False
-
-
-def default_voice_for_character(series_bible: dict, character: str, lang: str) -> str:
-    accent = (
-        series_bible.get("cast", {})
-        .get(character, {})
-        .get("voice_profile", {})
-        .get("accent", "")
-    )
-    if lang == "en":
-        if "indian" in str(accent).lower():
-            return "en-IN-NeerjaNeural"
-        return "en-US-AriaNeural"
-    if lang == "hi":
-        return "hi-IN-SwaraNeural"
-    if lang == "ta":
-        return "ta-IN-PallaviNeural"
-    return "en-US-AriaNeural"
-
-
 def localize_language(
     *,
     screenplay: dict,
@@ -242,9 +207,9 @@ def localize_language(
 def generate(
     *,
     screenplay_path: Path,
-    series_bible_path: Path,
+    series_profile_path: Path,
     storyboard_path: Path,
-    math_bible_path: Path,
+    topic_specs_path: Path,
     languages: list[str],
     dub_prompt_path: Path,
     backend: str,
@@ -254,9 +219,9 @@ def generate(
     voice_only: bool,
 ) -> dict:
     screenplay = json.loads(screenplay_path.read_text(encoding="utf-8"))
-    series_bible = (
-        json.loads(series_bible_path.read_text(encoding="utf-8"))
-        if series_bible_path.is_file()
+    series_profile = (
+        json.loads(series_profile_path.read_text(encoding="utf-8"))
+        if series_profile_path.is_file()
         else {"cast": {}}
     )
     storyboard = (
@@ -264,23 +229,23 @@ def generate(
         if storyboard_path.is_file()
         else {"scenes": []}
     )
-    math_bible = (
-        json.loads(math_bible_path.read_text(encoding="utf-8"))
-        if math_bible_path.is_file()
+    topic_specs = (
+        json.loads(topic_specs_path.read_text(encoding="utf-8"))
+        if topic_specs_path.is_file()
         else {"topics": []}
     )
 
     out_dir = output_dir(SUB_MODULE)
-    lines = collect_dialogue_lines(screenplay, series_bible)
-    math_lines = collect_math_narration_lines(storyboard, math_bible)
+    lines = collect_dialogue_lines(screenplay, series_profile)
+    math_lines = collect_math_narration_lines(storyboard, topic_specs)
     adjustments = reconcile_shot_durations(storyboard, lines)
 
     source_files: list[dict] = []
     for idx, line in enumerate(lines):
         rel = out_dir / "source" / f"{line['scene_id']}_{idx:03d}_{line['character']}.wav"
         if synthesize:
-            voice = default_voice_for_character(series_bible, line["character"], "en")
-            ok = synthesize_with_edge_tts(line["line"], rel, voice)
+            spec = resolve_voice_for_line(series_profile, line["character"], "en")
+            ok = synthesize_to_file(line["line"], rel, spec)
             if not ok:
                 write_silent_wav(rel, line["estimated_duration_seconds"])
         else:
@@ -294,8 +259,8 @@ def generate(
         rel = math_dir / f"{entry['scene_id']}_shot{entry['shot']:02d}.wav"
         duration = entry["estimated_duration_seconds"]
         if synthesize:
-            voice = default_voice_for_character(series_bible, "M", "en")
-            ok = synthesize_with_edge_tts(entry["narration"], rel, voice)
+            spec = resolve_voice_for_line(series_profile, "Y", "en")
+            ok = synthesize_to_file(entry["narration"], rel, spec)
             if not ok:
                 write_silent_wav(rel, duration)
         else:
@@ -344,8 +309,8 @@ def generate(
                 wav_path = dub_dir / f"{entry.get('scene_id', 'SC')}_{idx:03d}_{character}.wav"
                 duration = entry.get("target_duration_seconds") or lines[idx]["estimated_duration_seconds"]
                 if synthesize:
-                    voice = default_voice_for_character(series_bible, character, lang)
-                    if not synthesize_with_edge_tts(text, wav_path, voice):
+                    spec = resolve_voice_for_line(series_profile, character, lang)
+                    if not synthesize_to_file(text, wav_path, spec):
                         write_silent_wav(wav_path, duration)
                 else:
                     write_silent_wav(wav_path, duration)
@@ -375,6 +340,7 @@ def generate(
         "dub": dub_manifest,
         "synthesize": synthesize,
         "voice_only": voice_only,
+        "narration_voice": series_profile.get("narration_voice"),
     }
     return plan
 
@@ -390,9 +356,9 @@ def format_srt_time(seconds: float) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Plan and generate audio assets (timing, voice, dub, subtitles).")
     parser.add_argument("--screenplay", type=Path, default=DEFAULT_SCREENPLAY)
-    parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
+    parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
     parser.add_argument("--storyboard", type=Path, default=DEFAULT_STORYBOARD)
-    parser.add_argument("--math-bible", type=Path, default=DEFAULT_MATH_BIBLE)
+    parser.add_argument("--topic-specs", type=Path, default=DEFAULT_TOPIC_SPECS)
     parser.add_argument("--languages", default=",".join(DEFAULT_LANGUAGES))
     parser.add_argument("--dub-prompt", type=Path, default=DEFAULT_DUB_PROMPT)
     parser.add_argument("--backend", choices=["gemma", "qwen"], default=DEFAULT_LLM_BACKEND)
@@ -420,9 +386,9 @@ def main() -> None:
 
     plan = generate(
         screenplay_path=args.screenplay,
-        series_bible_path=args.series_bible,
+        series_profile_path=args.series_profile,
         storyboard_path=args.storyboard,
-        math_bible_path=args.math_bible,
+        topic_specs_path=args.topic_specs,
         languages=languages,
         dub_prompt_path=args.dub_prompt,
         backend=args.backend,

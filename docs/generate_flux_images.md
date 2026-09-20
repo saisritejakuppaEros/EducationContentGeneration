@@ -14,7 +14,7 @@ Stage 5 of the pipeline: for each shot in `flux_prompts.json`, generate a PNG. C
 
 2. **Prompts JSON** (`output/flux_prompts/flux_prompts.json` by default)
    - One `flux_prompt` per shot
-   - Cast keys **M** / **F** from `visual_style_bible.cast` decide which person photo(s) to attach
+   - Cast keys **M** / **F** from `visual_style_guide.cast` decide which person photo(s) to attach
 
 3. **Model weights** — `/workspace/parth/models/hub/models--black-forest-labs--FLUX.2-dev`
 

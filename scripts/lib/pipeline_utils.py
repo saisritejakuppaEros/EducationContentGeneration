@@ -41,10 +41,10 @@ STAGES: tuple[Stage, ...] = (
         "output/directing/directing_package.json",
         "qwen",
     ),
-    Stage("1", "math_bible", "generate_math_bible.py", "output/math_bible/math_bible.json", "qwen"),
+    Stage("1", "math_specs", "generate_math_specs.py", "output/math_specs/math_specs.json", "qwen"),
     Stage("2", "screenplay", "generate_screenplay.py", "output/screenplay/screenplay.json", "qwen"),
-    Stage("3", "series_bible", "generate_series_bible.py", "output/series_bible/series_bible.json", "manual"),
-    Stage("3b", "reference_bank", "build_reference_bank.py", "output/series_bible/reference_photos/", "manual"),
+    Stage("3", "series_profile", "generate_series_profile.py", "output/series_profile/series_profile.json", "manual"),
+    Stage("3b", "reference_bank", "build_reference_bank.py", "output/series_profile/reference_photos/", "manual"),
     Stage("4", "storyboard", "generate_storyboard.py", "output/storyboard/storyboard.json", "qwen"),
     Stage(
         "4p",
@@ -63,6 +63,13 @@ STAGES: tuple[Stage, ...] = (
         "manual",
     ),
     Stage("5b", "manim_videos", "generate_manim_videos.py", "output/manim_videos/manifest.json", "manual"),
+    Stage(
+        "5h",
+        "html_inserts",
+        "render_html_inserts.py",
+        "output/html_inserts/manifest.json",
+        "manual",
+    ),
     Stage("6", "audio", "generate_audio.py", "output/audio/audio_plan.json", "manual"),
     Stage(
         "6b",

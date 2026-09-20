@@ -12,7 +12,7 @@
         "tic": "pauses before equations"
       },
       "reference_photos": [
-        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/M/front_neutral.png", "source": "pending"}
+        {"tag": "front_neutral", "path": "output/series_profile/reference_photos/M/front_neutral.png", "source": "pending"}
       ]
     },
     "F": {
@@ -25,7 +25,7 @@
         "tic": "uses analogies"
       },
       "reference_photos": [
-        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/F/front_neutral.png", "source": "pending"}
+        {"tag": "front_neutral", "path": "output/series_profile/reference_photos/F/front_neutral.png", "source": "pending"}
       ]
     },
     "Y": {
@@ -38,7 +38,7 @@
         "tic": "asks short questions"
       },
       "reference_photos": [
-        {"tag": "front_neutral", "path": "output/series_bible/reference_photos/Y/front_neutral.png", "source": "pending"}
+        {"tag": "front_neutral", "path": "output/series_profile/reference_photos/Y/front_neutral.png", "source": "pending"}
       ]
     }
   },

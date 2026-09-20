@@ -110,4 +110,40 @@ def resolve_project_path(rel_or_abs: str | Path) -> Path:
     return PROJECT_ROOT / path
 
 
+SERIES_PROFILE_DIR = "series_profile"
+SERIES_PROFILE_JSON = "series_profile.json"
+MATH_SPECS_DIR = "math_specs"
+MATH_SPECS_JSON = "math_specs.json"
+TOPIC_SPECS_DIR = "topic_specs"
+TOPIC_SPECS_JSON = "topic_specs.json"
+
+
+def _first_existing(*candidates: Path) -> Path:
+    for path in candidates:
+        if path.is_file():
+            return path
+    return candidates[0]
+
+
+def book_series_profile_json(book_root: Path) -> Path:
+    """Book-level cast / continuity JSON (under textbooks/<id>/)."""
+    return book_root / SERIES_PROFILE_DIR / SERIES_PROFILE_JSON
+
+
+def book_series_profile_dir(book_root: Path) -> Path:
+    return book_root / SERIES_PROFILE_DIR
+
+
+def video_topic_specs_json(video_root: Path) -> Path:
+    return video_root / TOPIC_SPECS_DIR / TOPIC_SPECS_JSON
+
+
+def output_math_specs_json() -> Path:
+    return get_output_root() / MATH_SPECS_DIR / MATH_SPECS_JSON
+
+
+def output_series_profile_json() -> Path:
+    return get_output_root() / SERIES_PROFILE_DIR / SERIES_PROFILE_JSON
+
+
 bootstrap_output_root_from_argv()

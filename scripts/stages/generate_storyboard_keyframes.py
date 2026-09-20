@@ -14,13 +14,18 @@ from diffusers import Flux2Pipeline
 from diffusers.utils import load_image
 from PIL import Image, ImageDraw
 
-from cast_reference_utils import infer_characters_in_frame, resolve_cast_reference
+from cast_reference_utils import (
+    infer_characters_in_frame,
+    pick_reference_tag,
+    prepare_reference_image,
+    resolve_cast_reference,
+)
 from paths import DEFAULT_PERSON_DIR, PROJECT_ROOT, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pixels_storyboard import apply_keyframes_to_decomposition
 
 SUB_MODULE = "storyboard"
 DEFAULT_STORYBOARD = output_dir(SUB_MODULE) / "storyboard.json"
-DEFAULT_SERIES_BIBLE = output_dir("series_bible") / "series_bible.json"
+DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
 DEFAULT_MODEL_HUB = Path("/workspace/parth/models/hub/models--black-forest-labs--FLUX.2-dev")
 
 _PIPELINE: Flux2Pipeline | None = None
@@ -53,8 +58,8 @@ def load_pipeline(model_path: Path, *, cpu_offload: bool) -> Flux2Pipeline:
     return pipe
 
 
-def bank_lookup(series_bible: dict, cast_key: str, tag: str) -> Path | None:
-    cast = series_bible.get("cast", {}).get(cast_key, {})
+def bank_lookup(series_profile: dict, cast_key: str, tag: str) -> Path | None:
+    cast = series_profile.get("cast", {}).get(cast_key, {})
     for entry in cast.get("reference_photos") or []:
         if entry.get("tag") == tag:
             path = PROJECT_ROOT / entry["path"]
@@ -68,8 +73,8 @@ def bank_lookup(series_bible: dict, cast_key: str, tag: str) -> Path | None:
     return None
 
 
-def set_reference_image(series_bible: dict, location_hint: str) -> Path | None:
-    sets = series_bible.get("world", {}).get("sets") or []
+def set_reference_image(series_profile: dict, location_hint: str) -> Path | None:
+    sets = series_profile.get("world", {}).get("sets") or []
     if not sets:
         return None
     location_lower = (location_hint or "").lower()
@@ -129,7 +134,7 @@ def generate_keyframe(
 def generate(
     *,
     storyboard_path: Path,
-    series_bible_path: Path,
+    series_profile_path: Path,
     model_path: Path,
     scene_ids: list[str] | None,
     shot_numbers: list[int] | None,
@@ -146,7 +151,7 @@ def generate(
     decomposition_path: Path | None = None,
 ) -> dict:
     storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
-    series_bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
+    series_profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
     out_dir = get_output_root() / keyframes_subdir
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -189,7 +194,7 @@ def generate(
         prompt_parts: list[str] = []
         reference_log: list[dict] = []
 
-        base_path = set_reference_image(series_bible, scene.get("title", ""))
+        base_path = set_reference_image(series_profile, scene.get("title", ""))
         if base_path:
             images.append(load_image(str(base_path)).convert("RGB"))
             prompt_parts.append(f"environment from image {image_index}")
@@ -197,20 +202,23 @@ def generate(
             image_index += 1
 
         ref_tags = shot.get("reference_tags_used") or {}
-        cast = series_bible.get("cast", {})
+        cast = series_profile.get("cast", {})
         characters = infer_characters_in_frame(shot, cast)
-        for cast_key in characters:
-            tag = ref_tags.get(cast_key, "front_neutral")
+        for cast_key in characters[:2]:
+            tag = pick_reference_tag(shot, cast_key, ref_tags)
             ref_path, ref_source = resolve_cast_reference(
-                series_bible=series_bible,
+                series_profile=series_profile,
                 cast_key=cast_key,
                 tag=tag,
                 bank_lookup=bank_lookup,
                 source_dir=DEFAULT_PERSON_DIR,
             )
             if ref_path:
-                images.append(load_image(str(ref_path)).convert("RGB"))
-                prompt_parts.append(f"the character {cast_key} from image {image_index}, identity preserved exactly")
+                ref_img = prepare_reference_image(load_image(str(ref_path)).convert("RGB"), tag)
+                images.append(ref_img)
+                prompt_parts.append(
+                    f"character {cast_key} from image {image_index}, same face outfit and colors, identity preserved exactly"
+                )
                 reference_log.append(
                     {
                         "cast": cast_key,
@@ -240,17 +248,25 @@ def generate(
             height=height,
         )
 
-        if mask_retry and shot.get("characters_in_frame"):
-            cast_key = shot["characters_in_frame"][0]
-            tag = ref_tags.get(cast_key, "close_up_neutral")
-            ref_path = bank_lookup(series_bible, cast_key, tag)
+        if mask_retry and characters:
+            cast_key = characters[0]
+            tag = pick_reference_tag(shot, cast_key, ref_tags)
+            ref_path, _ = resolve_cast_reference(
+                series_profile=series_profile,
+                cast_key=cast_key,
+                tag=tag,
+                bank_lookup=bank_lookup,
+            )
             if ref_path:
                 mask = build_face_mask(image.size)
-                ref_img = load_image(str(ref_path)).convert("RGB")
+                ref_img = prepare_reference_image(load_image(str(ref_path)).convert("RGB"), tag)
                 image = generate_keyframe(
                     pipe,
                     images=[image, ref_img],
-                    prompt=f"the face of character {cast_key} from image two, identity preserved exactly",
+                    prompt=(
+                        f"the face and hair of character {cast_key} from image two, "
+                        "same cartoon identity, crisp eyes, identity preserved exactly"
+                    ),
                     mask=mask,
                     seed=shot_seed + 1,
                     num_inference_steps=num_inference_steps,
@@ -288,7 +304,7 @@ def generate(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate storyboard keyframe PNGs with FLUX.2-dev.")
     parser.add_argument("--storyboard", type=Path, default=DEFAULT_STORYBOARD)
-    parser.add_argument("--series-bible", type=Path, default=DEFAULT_SERIES_BIBLE)
+    parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
     parser.add_argument("--model-path", type=Path, default=DEFAULT_MODEL_HUB)
     parser.add_argument("--scene", action="append", dest="scene_ids")
     parser.add_argument("--shot", type=int, action="append", dest="shot_numbers")
@@ -325,13 +341,13 @@ def main() -> None:
 
     if not args.storyboard.is_file():
         raise FileNotFoundError(f"storyboard not found: {args.storyboard}")
-    if not args.series_bible.is_file():
-        raise FileNotFoundError(f"series_bible not found: {args.series_bible}")
+    if not args.series_profile.is_file():
+        raise FileNotFoundError(f"series_profile not found: {args.series_profile}")
 
     model_path = resolve_model_snapshot(args.model_path)
     manifest = generate(
         storyboard_path=args.storyboard,
-        series_bible_path=args.series_bible,
+        series_profile_path=args.series_profile,
         model_path=model_path,
         scene_ids=args.scene_ids,
         shot_numbers=args.shot_numbers,

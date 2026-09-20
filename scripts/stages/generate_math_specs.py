@@ -13,11 +13,11 @@ from gemma_utils import fill_user_prompt, load_prompt_template
 from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
-SUB_MODULE = "math_bible"
+SUB_MODULE = "math_specs"
 DEFAULT_INPUT = SAMPLES_DIR / "input_docs.md"
-DEFAULT_REFERENCE = SAMPLES_DIR / "math_bible.json"
-DEFAULT_PROMPT = PROMPTS_DIR / "math_bible.md"
-DEFAULT_OUTPUT_FILE = "math_bible.json"
+DEFAULT_REFERENCE = SAMPLES_DIR / "math_specs.json"
+DEFAULT_PROMPT = PROMPTS_DIR / "math_specs.md"
+DEFAULT_OUTPUT_FILE = "math_specs.json"
 DEFAULT_MATH_HISTORY = "[]"
 
 REQUIRED_TOPIC_KEYS = {
@@ -32,9 +32,9 @@ REQUIRED_TOPIC_KEYS = {
 }
 
 
-def validate_math_bible(data: dict) -> None:
+def validate_topic_specs(data: dict) -> None:
     if "chapter" not in data or "topics" not in data:
-        raise ValueError("math_bible must have 'chapter' and 'topics'")
+        raise ValueError("topic_specs must have 'chapter' and 'topics'")
     topics = data["topics"]
     if not isinstance(topics, list) or not topics:
         raise ValueError("'topics' must be a non-empty list")
@@ -53,17 +53,17 @@ def validate_verification(data: dict) -> None:
 
 def run_verification_gate(
     *,
-    math_bible: dict,
+    topic_specs: dict,
     backend: str,
     model_path: Path,
     max_tokens: int,
 ) -> dict:
     system = (
-        "You are a mathematics professor grading a math bible. "
+        "You are a mathematics professor grading a math specs. "
         "Re-verify every equation independently. "
         "Output ONLY JSON: {\"passed\": bool, \"failed_topics\": [{\"id\": \"1.1\", \"error\": \"...\"}]}"
     )
-    user = json.dumps(math_bible, indent=2, ensure_ascii=False)
+    user = json.dumps(topic_specs, indent=2, ensure_ascii=False)
     return run_llm_json(
         backend=backend,
         system_prompt=system,
@@ -93,7 +93,7 @@ def generate(
     user_prompt = fill_user_prompt(
         user_template,
         chapter_text=chapter_text,
-        series_bible_math_history=math_history,
+        series_profile_math_history=math_history,
         reference_output=reference_output,
     )
 
@@ -101,7 +101,7 @@ def generate(
         backend=backend,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        validate=validate_math_bible,
+        validate=validate_topic_specs,
         model_path=model_path,
         max_new_tokens=max_new_tokens,
         max_tokens=max_tokens,
@@ -113,7 +113,7 @@ def generate(
         return result
 
     verification = run_verification_gate(
-        math_bible=result,
+        topic_specs=result,
         backend=backend,
         model_path=model_path,
         max_tokens=max_tokens,
@@ -132,7 +132,7 @@ def generate(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate math_bible.json from chapter text.")
+    parser = argparse.ArgumentParser(description="Generate math_specs.json from chapter text.")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)

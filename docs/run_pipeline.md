@@ -22,9 +22,9 @@ By default all artifacts go under:
 
 ```
 output/
-  math_bible/
+  topic_specs/
   screenplay/
-  series_bible/
+  series_profile/
   storyboard/
   cinematic_videos/
   manim_videos/

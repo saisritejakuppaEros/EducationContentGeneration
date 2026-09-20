@@ -67,18 +67,27 @@ def resolve_shot_asset(
     shot_type: str,
     ltx_dir: Path,
     manim_dir: Path,
+    html_dir: Path,
     flux_dir: Path,
     enable_manim: bool = False,
+    enable_html_inserts: bool = False,
 ) -> Path | None:
-    if enable_manim and shot_type.upper() in MATH_TYPES:
-        for sid in scene_id_aliases(scene_id):
-            shot_tag = f"{sid}_shot{shot_num:02d}"
-            manim_clip = manim_dir / sid / f"{shot_tag}.mp4"
-            if manim_clip.is_file():
-                return manim_clip
-            manim_final = manim_dir / sid / shot_tag / "final_video.mp4"
-            if manim_final.is_file():
-                return manim_final
+    if shot_type.upper() in MATH_TYPES:
+        if enable_html_inserts:
+            for sid in scene_id_aliases(scene_id):
+                shot_tag = f"{sid}_shot{shot_num:02d}"
+                html_clip = html_dir / sid / f"{shot_tag}.mp4"
+                if html_clip.is_file():
+                    return html_clip
+        if enable_manim:
+            for sid in scene_id_aliases(scene_id):
+                shot_tag = f"{sid}_shot{shot_num:02d}"
+                manim_clip = manim_dir / sid / f"{shot_tag}.mp4"
+                if manim_clip.is_file():
+                    return manim_clip
+                manim_final = manim_dir / sid / shot_tag / "final_video.mp4"
+                if manim_final.is_file():
+                    return manim_final
 
     for sid in scene_id_aliases(scene_id):
         shot_tag = f"{sid}_shot{shot_num:02d}"
@@ -251,9 +260,11 @@ def collect_clips(
     storyboard: dict,
     ltx_dir: Path,
     manim_dir: Path,
+    html_dir: Path,
     flux_dir: Path,
     *,
     enable_manim: bool = False,
+    enable_html_inserts: bool = False,
     max_clips: int | None = None,
 ) -> list[dict]:
     clips: list[dict] = []
@@ -276,8 +287,10 @@ def collect_clips(
                 shot_type=shot_type,
                 ltx_dir=ltx_dir,
                 manim_dir=manim_dir,
+                html_dir=html_dir,
                 flux_dir=flux_dir,
                 enable_manim=enable_manim,
+                enable_html_inserts=enable_html_inserts,
             )
             if source is None:
                 print(f"skip missing: {scene_id} shot {shot_num}")
@@ -304,6 +317,7 @@ def assemble(
     audio_plan_path: Path,
     output_name: str,
     enable_manim: bool = False,
+    enable_html_inserts: bool = False,
     cinematic: bool = True,
     mix_audio: bool = True,
     bgm_volume: float = 0.22,
@@ -317,6 +331,7 @@ def assemble(
             ltx_dir = legacy_ltx
 
     manim_dir = assets_root / "manim_videos"
+    html_dir = assets_root / "html_inserts"
     flux_dir = assets_root / "storyboard"
     if not any(flux_dir.rglob("*.png")):
         legacy_flux = assets_root / "flux_images"
@@ -328,8 +343,10 @@ def assemble(
         storyboard,
         ltx_dir,
         manim_dir,
+        html_dir,
         flux_dir,
         enable_manim=enable_manim,
+        enable_html_inserts=enable_html_inserts,
         max_clips=max_clips,
     )
     if not clip_plan:
@@ -448,6 +465,11 @@ def main() -> None:
         action="store_true",
         help="Prefer Manim MP4s for MATH INSERT / CONCEPT shots when present.",
     )
+    parser.add_argument(
+        "--enable-html-inserts",
+        action="store_true",
+        help="Prefer HTML-rendered MP4s (stage 5h) for insert shots when present.",
+    )
     parser.add_argument("--no-cinematic-grade", action="store_true", help="Disable color grade and shot fades.")
     parser.add_argument("--no-audio-mix", action="store_true", help="Skip VO/BGM mux (video concat only).")
     parser.add_argument("--bgm-volume", type=float, default=0.22)
@@ -474,6 +496,7 @@ def main() -> None:
         audio_plan_path=audio_plan_path,
         output_name=output_name,
         enable_manim=args.enable_manim,
+        enable_html_inserts=args.enable_html_inserts,
         cinematic=not args.no_cinematic_grade,
         mix_audio=not args.no_audio_mix,
         bgm_volume=args.bgm_volume,

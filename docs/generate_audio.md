@@ -11,9 +11,9 @@ Background music and score beds are **not** generated here — use stage **6b** 
 ## Inputs
 
 - `output/screenplay/screenplay.json`
-- `output/series_bible/series_bible.json`
+- `output/series_profile/series_profile.json`
 - `output/storyboard/storyboard.json`
-- `output/math_bible/math_bible.json`
+- `output/topic_specs/math_specs.json`
 
 ## Outputs
 

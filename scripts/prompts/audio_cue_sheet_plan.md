@@ -27,7 +27,7 @@ Rules:
 - Title: {{title}}
 - Chapter: {{chapter}}
 - **Total runtime:** {{total_runtime}} ({{total_runtime_seconds}} seconds)
-- Style: {{style_bible_excerpt}}
+- Style: {{style_guide_excerpt}}
 
 ## Beat sheet
 ```json

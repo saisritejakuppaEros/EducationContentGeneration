@@ -5,7 +5,7 @@ NCERT explainer director — **phase 3: image prompts + BGM cues**. Output JSON 
 # User
 
 Title: {{title}}
-Style: {{style_bible_excerpt}}
+Style: {{style_guide_excerpt}}
 
 Scenes (reference):
 ```json

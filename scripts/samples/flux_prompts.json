@@ -3,7 +3,7 @@
   "source": "image_video_generation.json",
   "model_target": "flux-2",
   "prompt_framework": "SASC — Subject, Action, Style, Context",
-  "visual_style_bible": {
+  "visual_style_guide": {
     "cast": {},
     "sets": [],
     "camera_grammar": [],

@@ -1,6 +1,6 @@
 # generate_screenplay
 
-Turns `math_bible.json` into a scene-by-scene screenplay with dialogue.
+Turns `math_specs.json` into a scene-by-scene screenplay with dialogue.
 
 ## Purpose
 
@@ -8,8 +8,8 @@ Stage 2 — Screenwriter Agent. Produces JSON + human-readable Markdown review c
 
 ## Inputs
 
-- `output/math_bible/math_bible.json`
-- `output/series_bible/series_bible.json` (optional)
+- `output/topic_specs/math_specs.json`
+- `output/series_profile/series_profile.json` (optional)
 - `scripts/prompts/screenplay.md`
 
 ## Outputs
@@ -20,5 +20,5 @@ Stage 2 — Screenwriter Agent. Produces JSON + human-readable Markdown review c
 ## Usage
 
 ```bash
-python scripts/stages/generate_screenplay.py --math-bible output/math_bible/math_bible.json
+python scripts/stages/generate_screenplay.py --topic-specs output/topic_specs/math_specs.json
 ```

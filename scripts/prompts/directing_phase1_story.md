@@ -30,7 +30,7 @@ Return JSON:
     "audio_role": "bed | punctuation | voice-only",
     "tone_dial": 0
   },
-  "style_bible": "one string block",
+  "style_guide": "one string block",
   "beat_sheet": [
     {"beat_number": 1, "time_start": "0:00", "time_end": "0:45", "label": "HOOK", "turn_ids": ["T1"], "music_intensity": "2-3"}
   ],

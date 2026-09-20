@@ -15,7 +15,7 @@ from shot_decomposition import write_shot_decomposition
 
 SUB_MODULE = "shots"
 DEFAULT_DIRECTING = output_dir("directing") / "directing_package.json"
-DEFAULT_SERIES = output_dir("series_bible") / "series_bible.json"
+DEFAULT_SERIES = output_dir("series_profile") / "series_profile.json"
 
 
 def main() -> None:
@@ -29,10 +29,10 @@ def main() -> None:
         help="Path to directing_package.json",
     )
     parser.add_argument(
-        "--series-bible",
+        "--series-profile",
         type=Path,
         default=DEFAULT_SERIES,
-        help="Optional series bible for cast reference paths",
+        help="Optional series profile for cast reference paths",
     )
     parser.add_argument(
         "--runtime-seconds",
@@ -54,7 +54,7 @@ def main() -> None:
         directing,
         out_dir,
         target_runtime_seconds=args.runtime_seconds,
-        series_bible_path=args.series_bible if args.series_bible.is_file() else None,
+        series_profile_path=args.series_profile if args.series_profile.is_file() else None,
     )
     write_json(
         out_dir / "manifest.json",

@@ -1,15 +1,15 @@
 # generate_cinematic_videos
 
-Builds cinematic prompts from storyboard and renders MP4 clips (**MiniMax-H3** cloud I2V by default, or local **LTX 2.3**).
+Builds cinematic prompts from storyboard and renders MP4 clips (**local MiniMax-H3 via ComfyUI** by default, or local **LTX 2.3**, or optional cloud API).
 
 ## Purpose
 
-Stage 5a — Cinematic Video Agent. Wraps prompt generation + `generate_minimax_videos.py` (default) or `generate_ltx_videos.py`.
+Stage 5a — Cinematic Video Agent. Wraps prompt generation + `generate_minimax_h3_local_videos.py` (default), `generate_ltx_videos.py`, or `generate_minimax_videos.py` (API).
 
 ## Inputs
 
 - `output/storyboard/storyboard.json`
-- `output/series_bible/series_bible.json`
+- `output/series_profile/series_profile.json`
 - Keyframe PNGs under `output/storyboard/`
 
 ## Outputs
@@ -21,11 +21,10 @@ Stage 5a — Cinematic Video Agent. Wraps prompt generation + `generate_minimax_
 ## Usage
 
 ```bash
-export MINIMAX_API_KEY=...   # required for default backend
+# See docs/minimax_h3_local_comfyui.md for ComfyUI + MINIMAX_H3_* env
 python scripts/stages/generate_cinematic_videos.py --deterministic-prompts --prompts-only
 python scripts/stages/generate_cinematic_videos.py --deterministic-prompts --scene SC01 --skip-existing
 
-# Local GPU instead of MiniMax-H3:
 python scripts/stages/generate_cinematic_videos.py --deterministic-prompts --video-backend ltx --scene SC01
 ```
 

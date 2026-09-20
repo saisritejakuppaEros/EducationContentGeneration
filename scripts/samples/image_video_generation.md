@@ -1,7 +1,7 @@
 "The Signal" — Shot-Level Breakdown
 Every scene decomposed into individual shots, second-accurate, written for two uses: (1) Flux still-frame generation as init images, (2) WAN 2.2 motion generation from those inits. Tone target: Interstellar — practical-feeling analog/digital hybrid tech, teal/amber grade, volumetric light, quiet gravity, camera that holds rather than cuts frantically.
 
-0. Visual Style Bible (lock this before generating anything)
+0. Visual Style Guide (lock this before generating anything)
 Cast
 M — Mathematician: 50s, close-cropped silver hair, weathered calm face, deep navy flight suit with a worn embroidered insignia, thin wire-frame glasses that catch console light. Moves deliberately, speaks in short declarative lines. Reference feel: a Cooper-mentor figure — quiet authority, not flashy.
 F — Friend: late 20s, short dark hair, olive field jacket over a grey thermal, sleeves often pushed up, expressive hands mid-gesture. Leans in when explaining. Reference feel: the sharp one who makes the complex feel obvious.

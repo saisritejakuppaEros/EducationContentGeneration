@@ -74,9 +74,9 @@ python3 scripts/run_pipeline.py --dry-run
 python3 scripts/run_pipeline.py --from-stage 1 --to-stage 4
 
 # Or step by step
-python3 scripts/stages/generate_math_bible.py --input scripts/samples/input_docs.md
+python3 scripts/stages/generate_math_specs.py --input scripts/samples/input_docs.md
 python3 scripts/stages/generate_screenplay.py
-python3 scripts/stages/generate_series_bible.py
+python3 scripts/stages/generate_series_profile.py
 python3 scripts/stages/build_reference_bank.py --copy-only
 python3 scripts/stages/generate_storyboard.py
 
@@ -100,9 +100,9 @@ Default root: `output/` (override with `--output-root output/run_name` on any sc
 
 | Stage | Output |
 |-------|--------|
-| 1 | `<root>/math_bible/math_bible.json` |
+| 1 | `<root>/topic_specs/math_specs.json` |
 | 2 | `<root>/screenplay/screenplay.json` |
-| 3 | `<root>/series_bible/series_bible.json` |
+| 3 | `<root>/series_profile/series_profile.json` |
 | 4 | `<root>/storyboard/storyboard.json` |
 | 4b | `<root>/storyboard/*.png` |
 | 5a | `<root>/cinematic_videos/` |

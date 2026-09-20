@@ -9,8 +9,8 @@ Stage 4b — pixel generation for cinematic video init frames.
 ## Inputs
 
 - `output/storyboard/storyboard.json`
-- `output/series_bible/series_bible.json`
-- Reference photos from `output/series_bible/reference_photos/`
+- `output/series_profile/series_profile.json`
+- Reference photos from `output/series_profile/reference_photos/`
 - Fallback source photos from `assets/images/` (`ramanujan.jpeg` for M, `friend.png` for F/Y)
 
 Cast references are inferred from `flux_prompt` when `characters_in_frame` is empty. See `keyframes_manifest.json` → `reference_details` for per-shot audit.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Concept bible for social science / general lessons (writes math_bible.json schema)."""
+"""Concept specs for social science / general lessons (same schema as math_specs.json)."""
 import sys
 from pathlib import Path
 
@@ -13,9 +13,9 @@ from gemma_utils import fill_user_prompt, load_prompt_template
 from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
 from pipeline_utils import run_llm_json, write_gate, write_json
 
-SUB_MODULE = "math_bible"
-DEFAULT_PROMPT = PROMPTS_DIR / "topic_bible.md"
-DEFAULT_REFERENCE = SAMPLES_DIR / "math_bible.json"
+SUB_MODULE = "topic_specs"
+DEFAULT_PROMPT = PROMPTS_DIR / "topic_specs.md"
+DEFAULT_REFERENCE = SAMPLES_DIR / "math_specs.json"
 DEFAULT_MATH_HISTORY = "[]"
 
 REQUIRED_TOPIC_KEYS = {
@@ -30,9 +30,9 @@ REQUIRED_TOPIC_KEYS = {
 }
 
 
-def validate_bible(data: dict) -> None:
+def validate_specs(data: dict) -> None:
     if "chapter" not in data or "topics" not in data:
-        raise ValueError("bible must have 'chapter' and 'topics'")
+        raise ValueError("specs must have 'chapter' and 'topics'")
     for topic in data["topics"]:
         missing = REQUIRED_TOPIC_KEYS - topic.keys()
         if missing:
@@ -40,7 +40,7 @@ def validate_bible(data: dict) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate concept bible → math_bible/math_bible.json")
+    parser = argparse.ArgumentParser(description="Generate concept specs → topic_specs/topic_specs.json")
     parser.add_argument("--input", type=Path, required=True, help="Chapter markdown for this video unit.")
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
     parser.add_argument("--backend", choices=["gemma", "qwen"], default=DEFAULT_LLM_BACKEND)
@@ -65,17 +65,17 @@ def main() -> None:
         user_prompt=fill_user_prompt(
             user_template,
             chapter_text=chapter_text,
-            series_bible_math_history=DEFAULT_MATH_HISTORY,
+            series_profile_math_history=DEFAULT_MATH_HISTORY,
             reference_output=reference_output,
         ),
-        validate=validate_bible,
+        validate=validate_specs,
         max_tokens=args.max_tokens,
     )
 
     out_dir = output_dir(SUB_MODULE)
-    json_path = out_dir / "math_bible.json"
+    json_path = out_dir / "topic_specs.json"
     write_json(json_path, result)
-    write_gate("math_bible", passed=True, notes="topic bible (social science); verification skipped")
+    write_gate("topic_specs", passed=True, notes="topic specs (social science); verification skipped")
     print(f"Wrote {json_path}")
 
 

@@ -9,7 +9,7 @@ Stage 4a — Storyboard Agent shot breakdown with lens, scale, blocking, and Flu
 ## Inputs
 
 - `output/screenplay/screenplay.json`
-- `output/series_bible/series_bible.json`
+- `output/series_profile/series_profile.json`
 - `scripts/prompts/storyboard.md`
 
 ## Outputs

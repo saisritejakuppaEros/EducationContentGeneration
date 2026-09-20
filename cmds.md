@@ -20,7 +20,7 @@ export RUN=output/debug_20260811_1012
 
 curl -s $OPENAI_API_BASE/models | python3 -m json.tool
 
-# Resume (series bible already exists — start at 3b or 4)
+# Resume (series profile already exists — start at 3b or 4)
 python3 scripts/run_pipeline.py \
   --output-root $RUN \
   --from-stage 1 \

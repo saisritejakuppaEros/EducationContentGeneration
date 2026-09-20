@@ -7,12 +7,12 @@ Cast (locked):
 - F — Friend: smarter, teaches Y
 - Y — You: viewer POV, learns alongside F
 
-Given a math bible JSON and optional series bible, write a chapter screenplay as JSON.
+Given a math specs JSON and optional series profile, write a chapter screenplay as JSON.
 
 Rules:
 1. Build a mini-arc: cold open → M poses problem → F+Y attempt and hit a wall → concept needed → F teaches Y → apply it → payoff/cliffhanger.
 2. Write real dialogue — character name + line. One speaker per dialogue entry. Keep each line under 15 words; split longer thoughts into multiple entries.
-3. Every math_bible topic must appear in at least one scene (via topic_ids).
+3. Every topic_specs topic must appear in at least one scene (via topic_ids).
 4. Mark each scene type: STORY (cinematic), CONCEPT (Manim insert), or HYBRID (diegetic screen becomes Manim).
 5. Include teaching beats as F→Y dialogue, not vague stage direction.
 6. target_duration_seconds must be plausible for the dialogue (roughly 2–3 words per second for English).
@@ -45,13 +45,13 @@ Output JSON schema:
 
 Write a screenplay for this chapter.
 
-<math_bible>
-{{math_bible}}
-</math_bible>
+<topic_specs>
+{{topic_specs}}
+</topic_specs>
 
-<series_bible>
-{{series_bible}}
-</series_bible>
+<series_profile>
+{{series_profile}}
+</series_profile>
 
 <chapter_runtime_target_minutes>
 {{chapter_runtime_target_minutes}}

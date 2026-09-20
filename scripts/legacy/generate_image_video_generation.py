@@ -26,11 +26,11 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "story_title",
     "tone_target",
     "total_runtime_target",
-    "visual_style_bible",
+    "visual_style_guide",
     "scenes",
 }
 
-REQUIRED_BIBLE_KEYS = {"cast", "sets", "camera_grammar", "grade", "golden_rule"}
+REQUIRED_STYLE_GUIDE_KEYS = {"cast", "sets", "camera_grammar", "grade", "golden_rule"}
 REQUIRED_SCENE_KEYS = {
     "scene_id",
     "chapter",
@@ -60,12 +60,12 @@ def validate_output(data: dict) -> None:
     if missing:
         raise ValueError(f"Missing required top-level keys: {sorted(missing)}")
 
-    bible = data["visual_style_bible"]
-    if not isinstance(bible, dict):
-        raise ValueError("'visual_style_bible' must be an object")
-    missing_bible = REQUIRED_BIBLE_KEYS - bible.keys()
-    if missing_bible:
-        raise ValueError(f"'visual_style_bible' missing keys: {sorted(missing_bible)}")
+    guide = data["visual_style_guide"]
+    if not isinstance(guide, dict):
+        raise ValueError("'visual_style_guide' must be an object")
+    missing = REQUIRED_STYLE_GUIDE_KEYS - guide.keys()
+    if missing:
+        raise ValueError(f"'visual_style_guide' missing keys: {sorted(missing)}")
 
     scenes = data["scenes"]
     if not isinstance(scenes, list) or not scenes:

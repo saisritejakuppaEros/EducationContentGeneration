@@ -161,7 +161,7 @@ def main() -> None:
             chapter=package.get("chapter") or "",
             total_runtime=total_runtime,
             total_runtime_seconds=str(int(round(target_seconds))),
-            style_bible_excerpt=(package.get("style_bible") or "")[:900],
+            style_guide_excerpt=(package.get("style_guide") or "")[:900],
             beat_sheet_json=json.dumps(package.get("beat_sheet") or [], indent=2, ensure_ascii=False),
             script_json=json.dumps(package.get("script") or [], indent=2, ensure_ascii=False),
             scene_timeline_json=json.dumps(
