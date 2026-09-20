@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw
 
 from cast_reference_utils import infer_characters_in_frame, resolve_cast_reference
 from paths import DEFAULT_PERSON_DIR, PROJECT_ROOT, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
+from pixels_storyboard import apply_keyframes_to_decomposition
 
 SUB_MODULE = "storyboard"
 DEFAULT_STORYBOARD = output_dir(SUB_MODULE) / "storyboard.json"
@@ -141,10 +142,13 @@ def generate(
     skip_existing: bool,
     mask_retry: bool,
     include_math_inserts: bool = False,
+    keyframes_subdir: str = "storyboard",
+    decomposition_path: Path | None = None,
 ) -> dict:
     storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
     series_bible = json.loads(series_bible_path.read_text(encoding="utf-8"))
-    out_dir = output_dir(SUB_MODULE)
+    out_dir = get_output_root() / keyframes_subdir
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     manifest_path = out_dir / "keyframes_manifest.json"
     manifest = {"shots": []}
@@ -219,7 +223,7 @@ def generate(
             else:
                 print(f"Warning: no reference photo for {scene_id} shot {shot_num} character {cast_key}")
 
-        flux_prompt = shot.get("flux_prompt") or ""
+        flux_prompt = shot.get("flux_prompt") or shot.get("flux_frame") or shot.get("image_caption") or ""
         indexed_refs = ", ".join(prompt_parts)
         full_prompt = f"{flux_prompt}. {indexed_refs}." if indexed_refs else flux_prompt
 
@@ -276,6 +280,8 @@ def generate(
             torch.cuda.empty_cache()
 
     storyboard_path.write_text(json.dumps(storyboard, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if decomposition_path and decomposition_path.is_file():
+        apply_keyframes_to_decomposition(decomposition_path, manifest.get("shots") or [])
     return manifest
 
 
@@ -299,6 +305,18 @@ def main() -> None:
         help="Generate keyframes for MATH INSERT shots (use when Manim is disabled).",
     )
     parser.add_argument("--mask-retry", action="store_true", help="Run face mask inpaint pass after base keyframe.")
+    parser.add_argument(
+        "--keyframes-subdir",
+        type=str,
+        default="storyboard",
+        help="Subfolder under --output-root for PNG keyframes (e.g. shots/keyframes).",
+    )
+    parser.add_argument(
+        "--shot-decomposition",
+        type=Path,
+        default=None,
+        help="If set, sync keyframe paths back into this shot_decomposition.json.",
+    )
     add_output_root_argument(parser)
     args = parser.parse_args()
 
@@ -326,8 +344,10 @@ def main() -> None:
         skip_existing=args.skip_existing,
         mask_retry=args.mask_retry,
         include_math_inserts=args.include_math_inserts,
+        keyframes_subdir=args.keyframes_subdir,
+        decomposition_path=args.shot_decomposition,
     )
-    print(f"Done. {len(manifest.get('shots', []))} keyframes in {project_rel(output_dir(SUB_MODULE))}/")
+    print(f"Done. {len(manifest.get('shots', []))} keyframes in {project_rel(get_output_root() / args.keyframes_subdir)}/")
 
 
 if __name__ == "__main__":

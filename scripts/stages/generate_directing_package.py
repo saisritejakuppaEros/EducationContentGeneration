@@ -23,12 +23,18 @@ from paths import (
     output_dir,
     project_rel,
 )
+from director_staged import generate_staged, scene_budget as staged_scene_budget
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "directing"
 DEFAULT_INPUT = SAMPLES_DIR / "input_docs.md"
 DEFAULT_USER_PROMPT = PROMPTS_DIR / "directing_package.md"
 DEFAULT_RUNTIME_SECONDS = 540
+
+
+def scene_budget(runtime_seconds: int) -> dict[str, str]:
+    b = staged_scene_budget(runtime_seconds)
+    return {k: str(v) for k, v in b.items()}
 
 
 def load_director_system_prompt() -> str:
@@ -87,7 +93,15 @@ def generate(
     runtime_seconds: int,
     max_tokens: int,
 ) -> dict:
+    budget = scene_budget(runtime_seconds)
     system_prompt = load_director_system_prompt()
+    system_prompt += (
+        "\n\n## Completion budget (this run)\n"
+        f"- Emit **{budget['scene_count_min']}–{budget['scene_count_max']}** `scene_table` rows only "
+        f"(~{budget['scene_seconds_avg']} s/scene). Ignore any higher scene-count targets elsewhere.\n"
+        f"- At most **{budget['image_prompt_max']}** `image_prompts` entries (dedupe visuals).\n"
+        "- Return **one valid JSON object** — no truncation; shrink scene count if needed.\n"
+    )
     _, user_template = load_prompt_template(user_prompt_path)
     runtime_minutes = round(runtime_seconds / 60, 1)
 
@@ -102,10 +116,12 @@ def generate(
             chapter_text=chapter_text,
             runtime_seconds=str(runtime_seconds),
             runtime_minutes=str(runtime_minutes),
+            **budget,
         ),
         validate=validate,
         model_path=model_path,
         max_tokens=max_tokens,
+        json_retries=2 if backend == "qwen" else 1,
     )
 
 
@@ -118,7 +134,12 @@ def main() -> None:
     parser.add_argument("--backend", choices=["gemma", "qwen"], default=DEFAULT_LLM_BACKEND)
     parser.add_argument("--model-path", type=Path, default=None)
     parser.add_argument("--runtime-seconds", type=int, default=DEFAULT_RUNTIME_SECONDS)
-    parser.add_argument("--max-tokens", type=int, default=16384)
+    parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens per LLM call (staged mode uses several calls).")
+    parser.add_argument(
+        "--single-shot",
+        action="store_true",
+        help="One giant JSON call (fragile). Default for qwen is staged multi-pass.",
+    )
     add_output_root_argument(parser)
     args = parser.parse_args()
 
@@ -127,26 +148,48 @@ def main() -> None:
     configure_output_root(args.output_root)
     print(f"Output root: {project_rel(get_output_root())}/")
 
+    if args.backend == "qwen":
+        from qwen_utils import ensure_qwen_for_story_layout
+
+        ensure_qwen_for_story_layout(strict=True)
+
     if not args.input.is_file():
         raise FileNotFoundError(f"Input not found: {args.input}")
 
     chapter_text = args.input.read_text(encoding="utf-8")
     model_path = args.model_path or DEFAULT_GEMMA_MODEL
 
-    package = generate(
-        chapter_text=chapter_text,
-        user_prompt_path=args.prompt,
-        backend=args.backend,
-        model_path=model_path,
-        runtime_seconds=args.runtime_seconds,
-        max_tokens=args.max_tokens,
-    )
-
     out_dir = output_dir(SUB_MODULE)
+    use_staged = args.backend == "qwen" and not args.single_shot
+
+    if use_staged:
+        print("Using staged director (story → scene batches → media cues).")
+        package = generate_staged(
+            chapter_text=chapter_text,
+            runtime_seconds=args.runtime_seconds,
+            backend=args.backend,
+            model_path=model_path,
+            max_tokens=args.max_tokens,
+            out_dir=out_dir,
+        )
+        validate_package(package)
+    else:
+        package = generate(
+            chapter_text=chapter_text,
+            user_prompt_path=args.prompt,
+            backend=args.backend,
+            model_path=model_path,
+            runtime_seconds=args.runtime_seconds,
+            max_tokens=args.max_tokens,
+        )
     json_path = out_dir / "directing_package.json"
     md_path = out_dir / "directing_timeline.md"
     write_json(json_path, package)
     md_path.write_text(render_timeline_md(package), encoding="utf-8")
+
+    from directing_exports import export_directing_artifacts
+
+    export_directing_artifacts(json_path, out_dir)
 
     scene_count = len(package.get("scene_table", []))
     cue_count = len(package.get("audio_cue_sheet", []))

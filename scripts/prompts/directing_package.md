@@ -14,9 +14,13 @@ You are executing the NCERT Explainer Director workflow. Produce **only valid JS
 
 **Constraints for this run:**
 - Target runtime: {{runtime_seconds}} seconds (~{{runtime_minutes}} minutes).
-- Custom anchor/mascot: use a **placeholder** anchor (simple generic student silhouette); detailed avatar prompts come later.
+- **Scene budget:** exactly **{{scene_count_min}}–{{scene_count_max}}** rows in `scene_table` (average ~{{scene_seconds_avg}} s/scene). Do not exceed {{scene_count_max}} — output must fit in one JSON object.
+- **Language: English only** for all narration, titles, on-screen text, and image prompts (translate syllabus; no Assamese/other scripts in output fields).
+- Cast: use the **standard cartoon guide** (`assets/cartoon/image.png`) for all characters (M, F, Y) — same design every scene.
 - Output must be **timeline-first**: every scene row has `time_start` / `duration_seconds` that sum to the target runtime.
 - `audio_cue_sheet` is for the **background-music agent only** (instrumental beds). Do not embed music generation in VO.
+- Keep `vo_excerpt` ≤ 8 words; `script` VO blocks can be fuller but concise.
+- **`image_prompts`:** at most **{{image_prompt_max}}** entries (dedupe repeated visuals).
 
 Required JSON schema:
 
@@ -98,6 +102,6 @@ Required JSON schema:
 ```
 
 Rules:
-- 80–110 scenes in `scene_table` for a 9:00 target (scale down proportionally if runtime differs).
+- Respect the scene budget above (textbook / 8-min units typically 30–45 scenes, not 100+).
 - Curriculum accuracy: flag non-NCERT claims in `qa_notes` as `[EXTERNAL - verify]`.
-- `image_prompts`: one entry per **unique** visual in `scene_table` (reuse IDs where scenes share assets).
+- `image_prompts`: dedupe repeated visuals; stay within {{image_prompt_max}} entries.

@@ -5,13 +5,19 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from paths import DEFAULT_PERSON_DIR, PROJECT_ROOT
+from paths import DEFAULT_CARTOON_CAST_IMAGE, DEFAULT_PERSON_DIR, PROJECT_ROOT
 
 DEFAULT_CAST_PHOTOS = {
     "M": "ramanujan.jpeg",
     "F": "friend.png",
     "Y": "friend.png",
 }
+
+
+def default_cast_image_path() -> Path | None:
+    if DEFAULT_CARTOON_CAST_IMAGE.is_file():
+        return DEFAULT_CARTOON_CAST_IMAGE
+    return None
 
 NO_CHARACTER_HINTS = re.compile(
     r"no characters|no environment|math visualization|pure black|educational math|abstract mathematical",
@@ -32,7 +38,7 @@ def cast_match_patterns(cast_key: str, role: str) -> re.Pattern:
         )
     if cast_key == "Y":
         return re.compile(
-            r"\bcadet\b|\bviewer\b|\(\s*y\s*\)|\by—|\by'|\by,|\by and|\band y\b",
+            r"\bcadet\b|\bviewer\b|\bguide\b|\bmascot\b|\(\s*y\s*\)|\by—|\by'|\by,|\by and|\band y\b",
             re.IGNORECASE,
         )
     role_pat = re.escape(role) if role else ""
@@ -72,6 +78,9 @@ def infer_characters_in_frame(shot: dict, cast: dict) -> list[str]:
 
 
 def source_photo_path(cast_key: str, source_dir: Path | None = None) -> Path | None:
+    unified = default_cast_image_path()
+    if unified:
+        return unified
     root = source_dir or DEFAULT_PERSON_DIR
     filename = DEFAULT_CAST_PHOTOS.get(cast_key)
     if not filename:

@@ -14,7 +14,7 @@ from pathlib import Path
 
 from dialogue_utils import strip_on_screen_text, truncate_speech_for_ltx
 from gemma_utils import fill_user_prompt, load_gemma_model, load_prompt_template, run_gemma_json_with_model
-from paths import DEFAULT_LLM_BACKEND, PROJECT_ROOT, PROMPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel, resolve_project_path
+from paths import DEFAULT_LLM_BACKEND, PROJECT_ROOT, PROMPTS_DIR, SCRIPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel, resolve_project_path
 from pipeline_utils import write_json
 from qwen_utils import run_qwen_json
 
@@ -87,13 +87,23 @@ def default_ambient_sound(scene: dict) -> str:
 
 
 def build_deterministic_structured(shot: dict, scene: dict) -> dict:
-    raw_visual = shot.get("flux_prompt") or shot.get("blocking") or "cinematic sci-fi shot"
+    raw_visual = (
+        shot.get("flux_prompt")
+        or shot.get("flux_frame")
+        or shot.get("image_caption")
+        or shot.get("blocking")
+        or "bright 2D cartoon educational frame"
+    )
     visual = strip_on_screen_text(raw_visual)
     speech = truncate_speech_for_ltx(extract_speech(shot.get("dialogue")))
+    if not speech and shot.get("narration_line"):
+        speech = None
+    motion = (shot.get("wan_motion") or shot.get("camera_move") or "").strip()
+    sounds = motion or default_ambient_sound(scene)
     return {
         "visual": visual,
         "speech": speech,
-        "sounds": default_ambient_sound(scene),
+        "sounds": sounds,
     }
 
 
@@ -265,11 +275,22 @@ def build_prompts_manifest(
     }
 
 
-def run_video_generation(prompts_path: Path, extra_args: list[str]) -> int:
+def run_video_generation(
+    prompts_path: Path,
+    extra_args: list[str],
+    *,
+    video_backend: str = "minimax",
+) -> int:
     import subprocess
     import sys
 
-    script = PROJECT_ROOT / "scripts" / "generate_ltx_videos.py"
+    if video_backend == "minimax":
+        script = SCRIPTS_DIR / "legacy" / "generate_minimax_videos.py"
+    elif video_backend == "ltx":
+        script = SCRIPTS_DIR / "legacy" / "generate_ltx_videos.py"
+    else:
+        raise ValueError(f"Unknown video backend: {video_backend}")
+
     cmd = [
         sys.executable,
         str(script),
@@ -306,6 +327,12 @@ def main() -> None:
         "--include-math-inserts",
         action="store_true",
         help="Generate LTX clips for MATH INSERT / CONCEPT shots (use when Manim is disabled).",
+    )
+    parser.add_argument(
+        "--video-backend",
+        choices=("minimax", "ltx"),
+        default="minimax",
+        help="minimax = MiniMax-H3 cloud I2V (MINIMAX_API_KEY); ltx = local LTX 2.3 in gsplat_env.",
     )
     add_output_root_argument(parser)
     args, extra = parser.parse_known_args()
@@ -355,7 +382,7 @@ def main() -> None:
         for scene_id in args.scene_ids:
             video_args.extend(["--scene", scene_id])
 
-    raise SystemExit(run_video_generation(prompts_path, video_args))
+    raise SystemExit(run_video_generation(prompts_path, video_args, video_backend=args.video_backend))
 
 
 if __name__ == "__main__":

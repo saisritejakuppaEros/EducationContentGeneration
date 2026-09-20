@@ -64,6 +64,8 @@ Verify: `curl http://localhost:8007/v1/models`
 
 Layout and stage order: [scripts/README.md](scripts/README.md) (`lib/`, `stages/`, `knowledge/`, `legacy/`).
 
+**Whole textbook (PDF → script per chapter):** [docs/run_textbook_pipeline.md](docs/run_textbook_pipeline.md)
+
 ```bash
 # Preview stages
 python3 scripts/run_pipeline.py --dry-run

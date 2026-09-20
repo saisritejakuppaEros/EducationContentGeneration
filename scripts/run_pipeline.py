@@ -35,6 +35,8 @@ STAGE_DEFAULT_ARGS: dict[str, list[str]] = {
     "4": ["--backend", DEFAULT_LLM_BACKEND],
     "4b": [],
     "5a": ["--deterministic-prompts"],
+    "5c": [],
+    "4p": [],
     "5b": [
         "--manim-model", os.environ.get("QWEN_MODEL", DEFAULT_QWEN_MODEL),
         "--review-model", os.environ.get("QWEN_MODEL", DEFAULT_QWEN_MODEL),
@@ -204,6 +206,7 @@ def main() -> None:
         "4": "reference_bank" if not skip_reference_bank else "series_bible",
         "4b": "storyboard",
         "5a": "storyboard",
+        "5c": "cinematic_videos",
         "5b": "math_bible",
         "6": "storyboard",
         "6b": "directing_package",

@@ -16,7 +16,8 @@ Rules:
 4. Mark each scene type: STORY (cinematic), CONCEPT (Manim insert), or HYBRID (diegetic screen becomes Manim).
 5. Include teaching beats as F→Y dialogue, not vague stage direction.
 6. target_duration_seconds must be plausible for the dialogue (roughly 2–3 words per second for English).
-7. Output ONLY valid JSON. No markdown fences.
+7. **English only** for chapter title, action, dialogue, and location strings.
+8. Output ONLY valid JSON. No markdown fences.
 
 Output JSON schema:
 

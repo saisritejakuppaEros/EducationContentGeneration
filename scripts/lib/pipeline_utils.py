@@ -28,6 +28,13 @@ class Stage:
 STAGES: tuple[Stage, ...] = (
     Stage("0", "pipeline", "run_pipeline.py", "output/pipeline/state.json", "none"),
     Stage(
+        "ref",
+        "reference_pacing",
+        "analyze_reference_pacing.py",
+        "output/pipeline/reference_pacing_profile.json",
+        "manual",
+    ),
+    Stage(
         "dir",
         "directing_package",
         "generate_directing_package.py",
@@ -39,8 +46,22 @@ STAGES: tuple[Stage, ...] = (
     Stage("3", "series_bible", "generate_series_bible.py", "output/series_bible/series_bible.json", "manual"),
     Stage("3b", "reference_bank", "build_reference_bank.py", "output/series_bible/reference_photos/", "manual"),
     Stage("4", "storyboard", "generate_storyboard.py", "output/storyboard/storyboard.json", "qwen"),
+    Stage(
+        "4p",
+        "apply_pacing",
+        "apply_pacing_profile.py",
+        "output/storyboard/storyboard.json",
+        "manual",
+    ),
     Stage("4b", "storyboard_keyframes", "generate_storyboard_keyframes.py", "output/storyboard/", "manual"),
     Stage("5a", "cinematic_videos", "generate_cinematic_videos.py", "output/cinematic_videos/manifest.json", "manual"),
+    Stage(
+        "5c",
+        "production_qc",
+        "validate_production_assets.py",
+        "output/pipeline/qc_report.json",
+        "manual",
+    ),
     Stage("5b", "manim_videos", "generate_manim_videos.py", "output/manim_videos/manifest.json", "manual"),
     Stage("6", "audio", "generate_audio.py", "output/audio/audio_plan.json", "manual"),
     Stage(
@@ -102,6 +123,7 @@ def run_llm_json(
     temperature: float = 0.6,
     enable_thinking: bool = False,
     qwen_model: str | None = None,
+    json_retries: int = 2,
 ) -> dict:
     if backend == "gemma":
         processor, model = load_gemma_model(model_path)
@@ -124,6 +146,7 @@ def run_llm_json(
             max_tokens=max_tokens,
             temperature=temperature,
             validate=validate,
+            json_retries=json_retries,
         )
     raise ValueError(f"Unknown backend: {backend}. Use 'gemma' or 'qwen'.")
 

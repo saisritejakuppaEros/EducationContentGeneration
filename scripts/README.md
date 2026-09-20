@@ -13,10 +13,12 @@ flowchart LR
     s3["3: series_bible"]
     s3b["3b: reference_bank"]
     s4["4: storyboard"]
+    s4p["4p: apply_pacing (optional)"]
   end
   subgraph pixels["Pixels / GPU"]
     s4b["4b: storyboard_keyframes"]
     s5a["5a: cinematic_videos"]
+    s5c["5c: production_qc"]
     s5b["5b: manim_videos (optional)"]
   end
   subgraph audio["Audio"]
@@ -25,7 +27,7 @@ flowchart LR
   end
   s7["7: final_cut"]
 
-  dir --> s1 --> s2 --> s3 --> s3b --> s4 --> s4b --> s5a
+  dir --> s1 --> s2 --> s3 --> s3b --> s4 --> s4p --> s4b --> s5a --> s5c
   s5a --> s6
   s1 -.-> s5b
   s5b -.-> s7
@@ -42,8 +44,11 @@ flowchart LR
 | **3** | `stages/generate_series_bible.py` | `output/series_bible/series_bible.json` |
 | **3b** | `stages/build_reference_bank.py` | `output/series_bible/reference_photos/` |
 | **4** | `stages/generate_storyboard.py` | `output/storyboard/storyboard.json` |
+| **ref** | `stages/analyze_reference_pacing.py` | `output/pipeline/reference_pacing_profile.json` |
+| **4p** | `stages/apply_pacing_profile.py` | Retimes `storyboard.json` from **ref** profile |
 | **4b** | `stages/generate_storyboard_keyframes.py` | `output/storyboard/*.png` |
 | **5a** | `stages/generate_cinematic_videos.py` | `output/cinematic_videos/manifest.json` |
+| **5c** | `stages/validate_production_assets.py` | `output/pipeline/qc_report.json` + `contact_sheet.html` |
 | **5b** | `stages/generate_manim_videos.py` | `output/manim_videos/manifest.json` |
 | **6** | `stages/generate_audio.py` | `output/audio/audio_plan.json` |
 | **6b** | `stages/generate_background_audio.py` | `output/background_audio/manifest.json` |
@@ -59,6 +64,14 @@ python scripts/run_pipeline.py --generation-only    # dir → 5a (no final cut, 
 python scripts/run_pipeline.py --from-stage 1 --to-stage 4
 python scripts/run_pipeline.py --enable-manim --from-stage 5b --to-stage 7
 ```
+
+## Textbook PDF → many videos
+
+For a full NCERT PDF (one script package per chapter/unit): **[../docs/run_textbook_pipeline.md](../docs/run_textbook_pipeline.md)**
+
+Entry: `run_textbook_pipeline.py` → `extract` → `plan` → cartoon cast → per-video scripts.
+
+**LLM Director (story + scenes):** `run_textbook_director.py --book-id <id>` — uses `manifest.json` chapter context → `director_brief.md` → `directing_package.json` + screenplay + storyboard.
 
 ## Directory map
 
