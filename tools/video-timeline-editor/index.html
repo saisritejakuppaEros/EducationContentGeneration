@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Timeline — Chapter Cut</title>
+  <style>
+    :root {
+      --bg-deep: #0d0f12;
+      --bg-panel: #141820;
+      --bg-track: #1a1f28;
+      --border: #2a3140;
+      --text: #e8eaef;
+      --muted: #8b93a7;
+      --accent: #4f8cff;
+      --playhead: #ff4d6a;
+      --video: #3d7eff;
+      --image: #9b6dff;
+      --script: #3ecf8e;
+      --music: #f5a623;
+      --px-per-sec: 48;
+      --track-h: 56px;
+      --label-w: 132px;
+      --duration: 90;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 16px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .topbar h1 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .topbar .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .transport {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .transport button {
+      background: #252b38;
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .transport button:hover {
+      background: #2f3748;
+      border-color: #3d465a;
+    }
+
+    .transport button.primary {
+      background: var(--accent);
+      border-color: #6aa0ff;
+      width: 44px;
+    }
+
+    .transport button.primary:hover {
+      filter: brightness(1.08);
+    }
+
+    .timecode {
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+      min-width: 140px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .timecode strong {
+      color: var(--text);
+    }
+
+    .preview {
+      flex: 0 0 140px;
+      margin: 12px 16px 0;
+      background: #080a0c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-label {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .preview-frame {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px;
+      transition: opacity 0.2s;
+    }
+
+    .timeline-shell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      margin: 12px 16px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-panel);
+    }
+
+    .timeline-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .timeline-toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .timeline-toolbar input[type="range"] {
+      width: 100px;
+      accent-color: var(--accent);
+    }
+
+    .timeline-body {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .track-labels {
+      flex: 0 0 var(--label-w);
+      border-right: 1px solid var(--border);
+      background: #12161d;
+      padding-top: 28px;
+    }
+
+    .track-label {
+      height: var(--track-h);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .track-label .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .track-label.video .dot { background: var(--video); }
+    .track-label.image .dot { background: var(--image); }
+    .track-label.script .dot { background: var(--script); }
+    .track-label.music .dot { background: var(--music); }
+
+    .timeline-scroll {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative;
+      scroll-behavior: auto;
+    }
+
+    .timeline-scroll::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .timeline-scroll::-webkit-scrollbar-track {
+      background: #0f1218;
+    }
+
+    .timeline-scroll::-webkit-scrollbar-thumb {
+      background: #3a4255;
+      border-radius: 5px;
+    }
+
+    .timeline-inner {
+      position: relative;
+      min-width: calc(var(--duration) * var(--px-per-sec) * 1px);
+    }
+
+    .ruler {
+      height: 28px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #12161d;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ruler-ticks {
+      position: relative;
+      height: 100%;
+    }
+
+    .tick {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-left: 1px solid #2a3140;
+      font-size: 10px;
+      color: var(--muted);
+      padding: 6px 0 0 4px;
+      pointer-events: none;
+    }
+
+    .tick.major {
+      border-left-color: #404968;
+      color: #a8b0c4;
+    }
+
+    .tracks {
+      position: relative;
+    }
+
+    .track-row {
+      height: var(--track-h);
+      position: relative;
+      background: var(--bg-track);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .track-row:nth-child(even) {
+      background: #171c24;
+    }
+
+    .clip {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 8px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      cursor: grab;
+      user-select: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .clip:active {
+      cursor: grabbing;
+    }
+
+    .clip.video {
+      background: linear-gradient(135deg, #2a5fcc, var(--video));
+    }
+
+    .clip.image {
+      background: linear-gradient(135deg, #6b4fbf, var(--image));
+    }
+
+    .clip.script {
+      background: linear-gradient(135deg, #2a9d6a, var(--script));
+      font-size: 10px;
+      line-height: 1.25;
+      white-space: normal;
+      display: flex;
+      align-items: center;
+    }
+
+    .clip.music {
+      background: linear-gradient(135deg, #c47d12, var(--music));
+      padding: 0;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .waveform {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 6px;
+      opacity: 0.85;
+    }
+
+    .waveform span {
+      flex: 1;
+      max-width: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 2px;
+      animation: wave 0.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes wave {
+      from { transform: scaleY(0.35); }
+      to { transform: scaleY(1); }
+    }
+
+    .playhead-wrap {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .playhead {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--playhead);
+      box-shadow: 0 0 8px rgba(255, 77, 106, 0.6);
+      transform: translateX(-1px);
+    }
+
+    .playhead::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--playhead);
+    }
+
+    .hint {
+      padding: 8px 12px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    .hint kbd {
+      background: #252b38;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Chapter Cut — Timeline</h1>
+      <div class="meta">Video · Images · Script · Background music</div>
+    </div>
+    <div class="timecode">
+      <strong id="current-time">00:00:00</strong>
+      <span> / </span>
+      <span id="total-time">00:01:30</span>
+    </div>
+    <div class="transport">
+      <button type="button" id="btn-start" title="Go to start">⏮</button>
+      <button type="button" id="btn-play" class="primary" title="Play / Pause (Space)">▶</button>
+      <button type="button" id="btn-end" title="Go to end">⏭</button>
+    </div>
+  </header>
+
+  <section class="preview" aria-label="Program monitor">
+    <span class="preview-label">Monitor</span>
+    <div class="preview-frame" id="preview-text">Paused — scrub or press Play</div>
+  </section>
+
+  <section class="timeline-shell">
+    <div class="timeline-toolbar">
+      <span>Zoom</span>
+      <label>
+        <input type="range" id="zoom" min="24" max="96" value="48" />
+      </label>
+      <span id="zoom-label">48 px/s</span>
+      <span style="margin-left: auto">Click ruler to seek · Auto-scroll follows playhead</span>
+    </div>
+    <div class="timeline-body">
+      <div class="track-labels">
+        <div class="track-label video"><span class="dot"></span> Video</div>
+        <div class="track-label image"><span class="dot"></span> Image</div>
+        <div class="track-label script"><span class="dot"></span> Script</div>
+        <div class="track-label music"><span class="dot"></span> BGM</div>
+      </div>
+      <div class="timeline-scroll" id="scroll">
+        <div class="timeline-inner" id="timeline">
+          <div class="ruler" id="ruler">
+            <div class="ruler-ticks" id="ruler-ticks"></div>
+          </div>
+          <div class="tracks" id="tracks"></div>
+          <div class="playhead-wrap" id="playhead-wrap">
+            <div class="playhead"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">
+      Prototype for pipeline control — hook AI via <code>window.TimelineEditor</code>.
+      <kbd>Space</kbd> play · drag clips later · data from JSON.
+    </p>
+  </section>
+
+  <script>
+    const DURATION_SEC = 90;
+
+    const demoTimeline = {
+      durationSec: DURATION_SEC,
+      tracks: [
+        {
+          id: "video",
+          type: "video",
+          clips: [
+            { id: "v1", label: "Opening — M poses the problem", start: 0, duration: 18 },
+            { id: "v2", label: "Scene 2 — lab corridor", start: 18, duration: 22 },
+            { id: "v3", label: "Manim bridge shot", start: 52, duration: 12 },
+            { id: "v4", label: "Resolution — F teaches Y", start: 68, duration: 22 },
+          ],
+        },
+        {
+          id: "image",
+          type: "image",
+          clips: [
+            { id: "i1", label: "Keyframe — flux still A", start: 4, duration: 8 },
+            { id: "i2", label: "Diagram overlay", start: 40, duration: 10 },
+            { id: "i3", label: "Title card still", start: 78, duration: 6 },
+          ],
+        },
+        {
+          id: "script",
+          type: "script",
+          clips: [
+            { id: "s1", label: "Narrator: In this chapter we ask why the sky bends light…", start: 0, duration: 14 },
+            { id: "s2", label: "M (VO): Consider a beam entering water at an angle.", start: 14, duration: 16 },
+            { id: "s3", label: "F (VO): Snell's law links angle and index.", start: 48, duration: 18 },
+            { id: "s4", label: "Narrator: Summary — refraction in everyday optics.", start: 72, duration: 18 },
+          ],
+        },
+        {
+          id: "music",
+          type: "music",
+          clips: [
+            { id: "m1", label: "Ambient pad — intro", start: 0, duration: 35 },
+            { id: "m2", label: "Tension underscore", start: 35, duration: 28 },
+            { id: "m3", label: "Warm resolve + fade", start: 63, duration: 27 },
+          ],
+        },
+      ],
+    };
+
+    const state = {
+      time: 0,
+      playing: false,
+      pxPerSec: 48,
+      lastFrame: 0,
+    };
+
+    const els = {
+      scroll: document.getElementById("scroll"),
+      timeline: document.getElementById("timeline"),
+      rulerTicks: document.getElementById("ruler-ticks"),
+      tracks: document.getElementById("tracks"),
+      playheadWrap: document.getElementById("playhead-wrap"),
+      currentTime: document.getElementById("current-time"),
+      totalTime: document.getElementById("total-time"),
+      preview: document.getElementById("preview-text"),
+      btnPlay: document.getElementById("btn-play"),
+      btnStart: document.getElementById("btn-start"),
+      btnEnd: document.getElementById("btn-end"),
+      zoom: document.getElementById("zoom"),
+      zoomLabel: document.getElementById("zoom-label"),
+    };
+
+    function formatTime(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const ss = s % 60;
+      const pad = (n) => String(n).padStart(2, "0");
+      return h > 0 ? `${pad(h)}:${pad(m)}:${pad(ss)}` : `${pad(m)}:${pad(ss)}`;
+    }
+
+    function secToPx(sec) {
+      return sec * state.pxPerSec;
+    }
+
+    function pxToSec(px) {
+      return px / state.pxPerSec;
+    }
+
+    function clipAtTime(trackType, t) {
+      const track = demoTimeline.tracks.find((tr) => tr.type === trackType);
+      if (!track) return null;
+      return track.clips.find((c) => t >= c.start && t < c.start + c.duration) || null;
+    }
+
+    function updatePreview() {
+      const v = clipAtTime("video", state.time);
+      const s = clipAtTime("script", state.time);
+      const parts = [];
+      if (v) parts.push(`Video: ${v.label}`);
+      if (s) parts.push(`Script: ${s.label}`);
+      if (!parts.length) parts.push("No clip at playhead — gap or tail");
+      els.preview.textContent = parts.join(" · ");
+    }
+
+    function renderRuler() {
+      els.rulerTicks.innerHTML = "";
+      const dur = demoTimeline.durationSec;
+      for (let s = 0; s <= dur; s += 1) {
+        const tick = document.createElement("div");
+        tick.className = s % 5 === 0 ? "tick major" : "tick";
+        tick.style.left = `${secToPx(s)}px`;
+        if (s % 5 === 0) tick.textContent = formatTime(s);
+        els.rulerTicks.appendChild(tick);
+      }
+    }
+
+    function makeWaveformBars(count) {
+      const wrap = document.createElement("div");
+      wrap.className = "waveform";
+      for (let i = 0; i < count; i++) {
+        const bar = document.createElement("span");
+        const h = 30 + Math.random() * 70;
+        bar.style.height = `${h}%`;
+        bar.style.animationDelay = `${(i * 0.03) % 0.5}s`;
+        wrap.appendChild(bar);
+      }
+      return wrap;
+    }
+
+    function renderTracks() {
+      els.tracks.innerHTML = "";
+      const order = ["video", "image", "script", "music"];
+      for (const type of order) {
+        const track = demoTimeline.tracks.find((t) => t.type === type);
+        const row = document.createElement("div");
+        row.className = "track-row";
+        row.dataset.track = type;
+
+        for (const clip of track.clips) {
+          const el = document.createElement("div");
+          el.className = `clip ${type}`;
+          el.style.left = `${secToPx(clip.start)}px`;
+          el.style.width = `${secToPx(clip.duration)}px`;
+          el.title = clip.label;
+          el.dataset.clipId = clip.id;
+
+          if (type === "music") {
+            el.appendChild(makeWaveformBars(Math.min(40, Math.floor(clip.duration * 1.2))));
+          } else {
+            el.textContent = clip.label;
+          }
+          row.appendChild(el);
+        }
+        els.tracks.appendChild(row);
+      }
+    }
+
+    function applyZoom(px) {
+      state.pxPerSec = px;
+      document.documentElement.style.setProperty("--px-per-sec", String(px));
+      els.zoomLabel.textContent = `${px} px/s`;
+      renderRuler();
+      renderTracks();
+      updatePlayhead();
+    }
+
+    function updatePlayhead() {
+      const x = secToPx(state.time);
+      els.playheadWrap.style.left = `${x}px`;
+      els.currentTime.textContent = formatTime(state.time);
+      updatePreview();
+    }
+
+    function scrollToPlayhead(smooth) {
+      const x = secToPx(state.time);
+      const view = els.scroll;
+      const margin = 80;
+      const left = view.scrollLeft;
+      const right = left + view.clientWidth;
+      if (x < left + margin || x > right - margin) {
+        const target = Math.max(0, x - view.clientWidth * 0.35);
+        view.scrollTo({ left: target, behavior: smooth ? "smooth" : "auto" });
+      }
+    }
+
+    function seek(sec, scroll = true) {
+      state.time = Math.max(0, Math.min(demoTimeline.durationSec, sec));
+      updatePlayhead();
+      if (scroll) scrollToPlayhead(false);
+    }
+
+    function tick(now) {
+      if (!state.playing) return;
+      const dt = (now - state.lastFrame) / 1000;
+      state.lastFrame = now;
+      seek(state.time + dt, true);
+      scrollToPlayhead(true);
+      if (state.time >= demoTimeline.durationSec) {
+        state.playing = false;
+        els.btnPlay.textContent = "▶";
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function play() {
+      state.playing = true;
+      els.btnPlay.textContent = "⏸";
+      state.lastFrame = performance.now();
+      requestAnimationFrame(tick);
+    }
+
+    function pause() {
+      state.playing = false;
+      els.btnPlay.textContent = "▶";
+    }
+
+    function togglePlay() {
+      if (state.playing) pause();
+      else play();
+    }
+
+    els.btnPlay.addEventListener("click", togglePlay);
+    els.btnStart.addEventListener("click", () => {
+      pause();
+      seek(0);
+    });
+    els.btnEnd.addEventListener("click", () => {
+      pause();
+      seek(demoTimeline.durationSec);
+    });
+
+    els.zoom.addEventListener("input", () => applyZoom(Number(els.zoom.value)));
+
+    els.scroll.addEventListener("click", (e) => {
+      const rect = els.timeline.getBoundingClientRect();
+      const x = e.clientX - rect.left + els.scroll.scrollLeft;
+      pause();
+      seek(pxToSec(x));
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && e.target === document.body) {
+        e.preventDefault();
+        togglePlay();
+      }
+    });
+
+    els.totalTime.textContent = formatTime(demoTimeline.durationSec);
+    applyZoom(state.pxPerSec);
+    updatePlayhead();
+
+    window.TimelineEditor = {
+      getTime: () => state.time,
+      getDuration: () => demoTimeline.durationSec,
+      getTimeline: () => structuredClone(demoTimeline),
+      seek,
+      play,
+      pause,
+      loadTimeline(data) {
+        Object.assign(demoTimeline, data);
+        if (data.durationSec) demoTimeline.durationSec = data.durationSec;
+        if (data.tracks) demoTimeline.tracks = data.tracks;
+        document.documentElement.style.setProperty("--duration", String(demoTimeline.durationSec));
+        els.totalTime.textContent = formatTime(demoTimeline.durationSec);
+        applyZoom(state.pxPerSec);
+        seek(Math.min(state.time, demoTimeline.durationSec));
+      },
+    };
+  </script>
+</body>
+</html>

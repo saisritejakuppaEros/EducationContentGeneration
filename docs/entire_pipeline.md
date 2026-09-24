@@ -96,19 +96,30 @@ export QWEN_MODEL=Qwen/Qwen3.5-27B
 
 ## Operational recipe: `run.sh`
 
-Root [`run.sh`](../run.sh) is the **reference end-to-end run** for one book + one `VIDEO_ID`:
+Root [`run.sh`](../run.sh) is the **reference end-to-end run** for the Telugu book (defaults: `BOOK_ID=do_31310845228076236813575`, `VIDEO_ID=v11_ch_11.1`).
 
-| Step | What runs | Skip if artifact exists |
-|------|-----------|-------------------------|
-| 1 | `run_textbook_pipeline.py --through cast --heuristic-plan` | manifest, plan, cast |
-| 2 | `with_qwen_vllm.sh` → `run_textbook_director.py` | `directing/directing_package.json` |
-| 3 | `plan_background_music.py --and-generate` | `background_audio/manifest.json` |
-| 4 | `build_reference_bank.py` (book-level, gsplat_env) | `series_profile/reference_photos/manifest.json` |
-| 5 | `run_textbook_pixels.py` (gsplat_env) | `--skip-existing` |
-| 6 | `run_pipeline.py --from-stage 6 --to-stage 6` | VO only |
-| 7 | `run_pipeline.py --from-stage 5c --to-stage 7` | QC + mux |
+| Step | What runs |
+|------|-----------|
+| ingest | `run_textbook_pipeline.py --through cast` |
+| llm | `run_textbook_director.py` + `plan_background_music.py` |
+| reference bank | `build_reference_bank.py` (cast continuity for Flux) |
+| pixels | `run_textbook_pixels.py` — default **`VIDEO_BACKEND=ltx`** |
+| finish | `run_pipeline.py` stages 6, 5c–7 |
 
-Set `PDF`, `BOOK_ID`, `VIDEO_ID`, and `RUN=output/textbooks/.../videos/...` at the top of `run.sh`.
+**Fresh vs resume**
+
+```bash
+./run.sh                    # resume (skip existing artifacts)
+FRESH=1 ./run.sh            # delete this video unit folder, full regen
+FRESH=book ./run.sh         # delete entire book under output/textbooks/<BOOK_ID>
+FRESH=pixels STEP=pixels ./run.sh   # re-render keyframes/clips + mux only
+STEP=finish ./run.sh        # VO + mux when pixels already exist
+VIDEO_BACKEND=minimax_h3 ./run.sh   # only if ComfyUI env is configured
+```
+
+Override targets: `PDF`, `BOOK_ID`, `VIDEO_ID`, `GPU`, `HF_HOME`.
+
+**AniMaker-style continuity (today):** locked cast reference bank + `shot_decomposition.json` timeline before I2V. Full MCTS multi-clip AniMaker stack: `scripts/Anim-Director/AniMaker/` (separate conda env; not wired into `run.sh` yet).
 
 ---
 
@@ -201,7 +212,8 @@ This can also run as pipeline stage **6b** when using `run_pipeline.py` with `--
 
 | Backend | Role |
 |---------|------|
-| `minimax_h3` (default in `run.sh`) | Local ComfyUI MiniMax-H3 I2V |
+| `minimax_h3` | Local ComfyUI MiniMax-H3 I2V (opt-in via `VIDEO_BACKEND`) |
+| `ltx` (default in `run.sh`) | Local LTX 2.3 in `gsplat_env` |
 | `ltx` | Local LTX 2.3 diffusers |
 | `minimax_api` | Cloud MiniMax |
 

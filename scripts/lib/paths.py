@@ -99,8 +99,9 @@ def output_dir(sub_module_name: str) -> Path:
     return directory
 
 
-def project_rel(path: Path) -> str:
-    return str(path.relative_to(PROJECT_ROOT)).replace("\\", "/")
+def project_rel(path: Path | str) -> str:
+    resolved = resolve_project_path(path).resolve()
+    return str(resolved.relative_to(PROJECT_ROOT.resolve())).replace("\\", "/")
 
 
 def resolve_project_path(rel_or_abs: str | Path) -> Path:
@@ -136,6 +137,22 @@ def book_series_profile_dir(book_root: Path) -> Path:
 
 def video_topic_specs_json(video_root: Path) -> Path:
     return video_root / TOPIC_SPECS_DIR / TOPIC_SPECS_JSON
+
+
+def output_topic_specs_json() -> Path:
+    """topic_specs.json under the active --output-root (video unit or chapter folder)."""
+    return get_output_root() / TOPIC_SPECS_DIR / TOPIC_SPECS_JSON
+
+
+def resolve_topic_specs_json(explicit: Path | None = None) -> Path:
+    """Resolve topic_specs (or legacy math_specs) after configure_output_root."""
+    if explicit is not None and explicit.is_file():
+        return explicit
+    root = get_output_root()
+    return _first_existing(
+        root / TOPIC_SPECS_DIR / TOPIC_SPECS_JSON,
+        root / MATH_SPECS_DIR / MATH_SPECS_JSON,
+    )
 
 
 def output_math_specs_json() -> Path:

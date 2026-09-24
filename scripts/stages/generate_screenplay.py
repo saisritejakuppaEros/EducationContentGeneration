@@ -11,11 +11,20 @@ from pathlib import Path
 
 from dialogue_utils import split_screenplay_dialogue
 from gemma_utils import fill_user_prompt, load_prompt_template
-from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
+from paths import (
+    DEFAULT_LLM_BACKEND,
+    PROMPTS_DIR,
+    SAMPLES_DIR,
+    add_output_root_argument,
+    configure_output_root,
+    get_output_root,
+    output_dir,
+    project_rel,
+    resolve_topic_specs_json,
+)
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "screenplay"
-DEFAULT_TOPIC_SPECS = output_dir("topic_specs") / "topic_specs.json"
 DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
 DEFAULT_REFERENCE = SAMPLES_DIR / "screenplay.json"
 DEFAULT_PROMPT = PROMPTS_DIR / "screenplay.md"
@@ -144,7 +153,12 @@ def generate(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate screenplay.json from topic_specs.")
-    parser.add_argument("--topic-specs", type=Path, default=DEFAULT_TOPIC_SPECS)
+    parser.add_argument(
+        "--topic-specs",
+        type=Path,
+        default=None,
+        help="Defaults to <output-root>/topic_specs/topic_specs.json after --output-root is applied.",
+    )
     parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
@@ -163,14 +177,15 @@ def main() -> None:
     configure_output_root(args.output_root)
     print(f"Output root: {project_rel(get_output_root())}/")
 
-    if not args.topic_specs.is_file():
-        raise FileNotFoundError(f"topic_specs not found: {args.topic_specs}")
+    topic_specs_path = resolve_topic_specs_json(args.topic_specs)
+    if not topic_specs_path.is_file():
+        raise FileNotFoundError(f"topic_specs not found: {topic_specs_path}")
 
     model_path = args.model_path or DEFAULT_GEMMA_MODEL
     out_dir = output_dir(SUB_MODULE)
 
     result = generate(
-        topic_specs_path=args.topic_specs,
+        topic_specs_path=topic_specs_path,
         series_profile_path=args.series_profile,
         reference_path=args.reference,
         prompt_path=args.prompt,

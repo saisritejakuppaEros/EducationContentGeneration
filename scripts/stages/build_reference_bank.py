@@ -17,7 +17,19 @@ from PIL import Image
 
 from gemma_utils import fill_user_prompt, load_prompt_template
 from cast_reference_utils import profile_reference_path, source_photo_path
-from paths import DEFAULT_GEMMA_MODEL, DEFAULT_LLM_BACKEND, DEFAULT_PERSON_DIR, PROJECT_ROOT, PROMPTS_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
+from paths import (
+    DEFAULT_GEMMA_MODEL,
+    DEFAULT_LLM_BACKEND,
+    DEFAULT_PERSON_DIR,
+    PROJECT_ROOT,
+    PROMPTS_DIR,
+    add_output_root_argument,
+    configure_output_root,
+    get_output_root,
+    output_dir,
+    project_rel,
+    resolve_project_path,
+)
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "series_profile"
@@ -81,10 +93,10 @@ def resolve_cast_source(
 ) -> Path:
     path = profile_reference_path(profile, cast_key, "front_neutral")
     if path:
-        return path
+        return resolve_project_path(path).resolve()
     path = source_photo_path(cast_key, series_profile=profile, source_dir=source_dir)
     if path:
-        return path
+        return resolve_project_path(path).resolve()
     filename = source_photos.get(cast_key)
     if filename:
         legacy = source_dir / filename
@@ -103,8 +115,8 @@ def copy_source_as_front_neutral(
     dest.parent.mkdir(parents=True, exist_ok=True)
     if not dest.is_file() or dest.stat().st_mtime < source_path.stat().st_mtime:
         shutil.copy2(source_path, dest)
-        print(f"Copied source -> {dest.relative_to(PROJECT_ROOT)}")
-    return dest
+        print(f"Copied source -> {project_rel(dest)}")
+    return dest.resolve()
 
 
 def mirror_tags_from_leader(*, leader_key: str, cast_key: str, out_root: Path, tags: list[str]) -> None:
@@ -189,11 +201,10 @@ def update_profile_reference_paths(profile: dict, out_root: Path) -> dict:
         if cast_dir.is_dir():
             for png in sorted(cast_dir.glob("*.png")):
                 tag = png.stem
-                rel = png.relative_to(PROJECT_ROOT)
                 photos.append(
                     {
                         "tag": tag,
-                        "path": str(rel).replace("\\", "/"),
+                        "path": project_rel(png),
                         "source": "generated" if tag != "front_neutral" else "master",
                     }
                 )
@@ -220,6 +231,8 @@ def build_bank(
     num_inference_steps: int,
     guidance_scale: float,
 ) -> dict:
+    out_root = resolve_project_path(out_root).resolve()
+    series_profile_path = resolve_project_path(series_profile_path).resolve()
     profile = json.loads(series_profile_path.read_text(encoding="utf-8"))
     visual_grammar = profile.get("visual_grammar", {})
     manifest = {"cast": {}, "generated": []}
@@ -255,7 +268,7 @@ def build_bank(
             out_root=out_root,
         )
         front_by_key[cast_key] = front_path
-        manifest["cast"][cast_key] = {"front_neutral": str(front_path.relative_to(PROJECT_ROOT))}
+        manifest["cast"][cast_key] = {"front_neutral": project_rel(front_path)}
 
     def generate_tags_for(cast_key: str) -> None:
         cast_dir = out_root / cast_key
@@ -303,7 +316,7 @@ def build_bank(
                 guidance_scale=guidance_scale,
             )
             image.save(dest)
-            manifest["generated"].append(str(dest.relative_to(PROJECT_ROOT)))
+            manifest["generated"].append(project_rel(dest))
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 

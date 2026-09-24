@@ -11,13 +11,21 @@ from pathlib import Path
 
 from dialogue_utils import split_storyboard_shots
 from gemma_utils import fill_user_prompt, load_prompt_template
-from paths import DEFAULT_LLM_BACKEND, PROMPTS_DIR, SAMPLES_DIR, add_output_root_argument, configure_output_root, get_output_root, output_dir, project_rel
+from paths import (
+    DEFAULT_LLM_BACKEND,
+    PROMPTS_DIR,
+    SAMPLES_DIR,
+    add_output_root_argument,
+    configure_output_root,
+    get_output_root,
+    output_dir,
+    project_rel,
+    resolve_topic_specs_json,
+)
 from pipeline_utils import run_llm_json, write_gate, write_json
 
 SUB_MODULE = "storyboard"
-DEFAULT_SCREENPLAY = output_dir("screenplay") / "screenplay.json"
 DEFAULT_SERIES_PROFILE = output_dir("series_profile") / "series_profile.json"
-DEFAULT_TOPIC_SPECS = output_dir("topic_specs") / "topic_specs.json"
 DEFAULT_REFERENCE = SAMPLES_DIR / "storyboard.json"
 DEFAULT_PROMPT = PROMPTS_DIR / "storyboard.md"
 
@@ -237,9 +245,9 @@ def generate(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate storyboard.json from screenplay.")
-    parser.add_argument("--screenplay", type=Path, default=DEFAULT_SCREENPLAY)
+    parser.add_argument("--screenplay", type=Path, default=None)
     parser.add_argument("--series-profile", type=Path, default=DEFAULT_SERIES_PROFILE)
-    parser.add_argument("--topic-specs", type=Path, default=DEFAULT_TOPIC_SPECS)
+    parser.add_argument("--topic-specs", type=Path, default=None)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT)
     parser.add_argument("--scene", action="append", dest="scene_ids")
@@ -262,6 +270,9 @@ def main() -> None:
     configure_output_root(args.output_root)
     print(f"Output root: {project_rel(get_output_root())}/")
 
+    screenplay_path = args.screenplay or (output_dir("screenplay") / "screenplay.json")
+    topic_specs_path = resolve_topic_specs_json(args.topic_specs)
+
     out_path = output_dir(SUB_MODULE) / "storyboard.json"
 
     if args.fix_dialogue:
@@ -276,17 +287,16 @@ def main() -> None:
         print(f"Fixed dialogue splits in {out_path}")
         return
 
-    for path in (args.screenplay, args.series_profile):
+    for path in (screenplay_path, args.series_profile):
         if not path.is_file():
             raise FileNotFoundError(f"Required input not found: {path}")
 
     model_path = args.model_path or DEFAULT_GEMMA_MODEL
-    out_path = output_dir(SUB_MODULE) / "storyboard.json"
 
     result = generate(
-        screenplay_path=args.screenplay,
+        screenplay_path=screenplay_path,
         series_profile_path=args.series_profile,
-        topic_specs_path=args.topic_specs,
+        topic_specs_path=topic_specs_path,
         reference_path=args.reference,
         prompt_path=args.prompt,
         scene_ids=args.scene_ids,
